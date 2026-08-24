@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, X, ChevronDown, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
   const { count, setIsOpen } = useCart();
+  const { theme, isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -81,7 +83,7 @@ export default function Navbar() {
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Search */}
               <form onSubmit={handleSearch} className="hidden sm:flex items-center">
                 <div className="relative">
@@ -90,7 +92,7 @@ export default function Navbar() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar..."
-                    className="bg-white/8 border border-white/10 text-white placeholder-white/30 text-sm rounded-full py-1.5 pl-4 pr-9 w-40 focus:w-52 focus:outline-none focus:border-white/30 transition-all duration-300"
+                    className="bg-white/8 border border-white/10 text-white placeholder-white/30 text-sm rounded-full py-1.5 pl-4 pr-9 w-36 focus:w-48 focus:outline-none focus:border-white/30 transition-all duration-300"
                     id="navbar-search"
                   />
                   <button type="submit" className="absolute right-2.5 top-1/2 -translate-y-1/2">
@@ -98,6 +100,21 @@ export default function Navbar() {
                   </button>
                 </div>
               </form>
+
+              {/* Theme Toggle Button */}
+              <button
+                id="theme-toggle-btn"
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
+                title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                aria-label="Alternar tema"
+              >
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-amber-400 hover:rotate-45 transition-transform duration-300" />
+                ) : (
+                  <Moon className="w-4 h-4 text-indigo-600 hover:-rotate-12 transition-transform duration-300" />
+                )}
+              </button>
 
               {/* Cart */}
               <button
@@ -206,6 +223,16 @@ export default function Navbar() {
             <Link to="/catalog" className="block text-white/70 hover:text-white text-sm font-medium uppercase py-1">
               Catálogo
             </Link>
+            <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+              <span className="text-white/50 text-xs font-medium">Tema visual</span>
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-white/80 text-xs"
+              >
+                {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-500" />}
+                <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>
+              </button>
+            </div>
           </div>
         )}
       </nav>
