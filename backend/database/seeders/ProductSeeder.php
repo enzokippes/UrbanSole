@@ -24,7 +24,7 @@ class ProductSeeder extends Seeder
                 'Royal Blue (Azul/Negro)'     => '/images/jordan-royal.jpg',
             ],
             'tags' => ['jordan', 'basketball', 'retro', 'high-top'],
-            'model_3d_url' => '/models/jordan.glb',
+            'model_3d_url' => '/models/deportiva.glb',
             'images' => [
                 '/images/jordan-chicago.jpg',
                 '/images/jordan-bred.jpg',
@@ -46,7 +46,7 @@ class ProductSeeder extends Seeder
                 'Chicago (Rojo/Blanco)'        => '/images/jordan-chicago.jpg',
             ],
             'tags' => ['jordan', 'earth-tones', 'lifestyle', 'premium'],
-            'model_3d_url' => '/models/jordan.glb',
+            'model_3d_url' => '/models/urbana.glb',
             'images' => [
                 '/images/jordan-mocha.jpg',
                 '/images/jordan-smoke-grey.jpg',
@@ -68,7 +68,7 @@ class ProductSeeder extends Seeder
                 'Smoke Grey (Gris/Blanco)' => '/images/jordan-smoke-grey.jpg',
             ],
             'tags' => ['jordan', 'royal', 'basketball', 'high-top'],
-            'model_3d_url' => '/models/jordan.glb',
+            'model_3d_url' => '/models/basq.glb',
             'images' => [
                 '/images/jordan-royal.jpg',
                 '/images/jordan-bred.jpg',
@@ -156,7 +156,7 @@ class ProductSeeder extends Seeder
                 'Chicago (Rojo/Blanco)'    => '/images/jordan-chicago.jpg',
             ],
             'tags' => ['jordan', 'women', 'smoke-grey', 'lifestyle'],
-            'model_3d_url' => '/models/jordan.glb',
+            'model_3d_url' => '/models/dama.glb',
             'images' => [
                 '/images/jordan-smoke-grey.jpg',
                 '/images/jordan-sunset.jpg',
@@ -178,7 +178,7 @@ class ProductSeeder extends Seeder
                 'Sunset Multicolor'        => '/images/jordan-sunset.jpg',
             ],
             'tags' => ['kids', 'jordan', 'heritage', 'high-top'],
-            'model_3d_url' => '/models/jordan.glb',
+            'model_3d_url' => '/models/kids.glb',
             'images' => [
                 '/images/jordan-chicago.jpg',
                 '/images/jordan-royal.jpg',
