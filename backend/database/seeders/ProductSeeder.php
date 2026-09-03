@@ -46,7 +46,7 @@ class ProductSeeder extends Seeder
                 'Chicago (Rojo/Blanco)'        => '/images/jordan-chicago.jpg',
             ],
             'tags' => ['jordan', 'earth-tones', 'lifestyle', 'premium'],
-            'model_3d_url' => '/models/urbana.glb',
+            'model_3d_url' => '/models/urban (2).glb',
             'images' => [
                 '/images/jordan-mocha.jpg',
                 '/images/jordan-smoke-grey.jpg',
