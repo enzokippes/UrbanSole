@@ -1,0 +1,199 @@
+<div class="catalog-page">
+  <div class="container py-8">
+    <!-- Header: Title, Count, Sort and Mobile Filter Button -->
+    <div class="catalog-header">
+      <div>
+        <h1 class="catalog-title">
+          {{ filters.search ? '"' + filters.search + '"' : (filters.category || 'Catálogo de Zapatillas') }}
+        </h1>
+        <p *ngIf="!loading()" class="catalog-subtitle">
+          {{ totalProducts() }} productos encontrados
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <!-- Sort Select -->
+        <select 
+          [(ngModel)]="filters.sort" 
+          (change)="onSortChange()" 
+          class="sort-select"
+          id="catalog-sort-select"
+        >
+          <option *ngFor="let opt of sortOptions" [value]="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+
+        <!-- Mobile Filter Toggler Button (KAN-102) -->
+        <button 
+          (click)="sidebarOpen.set(!sidebarOpen())" 
+          class="mobile-filter-btn" 
+          id="filter-toggle-btn"
+        >
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="filter-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          <span>Filtros</span>
+          <span *ngIf="activeFilterCount > 0" class="filter-badge">
+            {{ activeFilterCount }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Filter Chips Row (KAN-102) -->
+    <div *ngIf="activeFilterCount > 0" class="chips-container">
+      <span *ngIf="filters.category" class="filter-chip">
+        Categoría: {{ filters.category }}
+        <button (click)="removeCategory()" class="chip-remove-btn">&times;</button>
+      </span>
+      <span *ngFor="let size of filters.sizes" class="filter-chip">
+        Talle {{ size }}
+        <button (click)="removeSize(size)" class="chip-remove-btn">&times;</button>
+      </span>
+      <span *ngFor="let color of filters.colors" class="filter-chip">
+        {{ color }}
+        <button (click)="removeColor(color)" class="chip-remove-btn">&times;</button>
+      </span>
+      <span *ngIf="filters.min_price" class="filter-chip">
+        Desde ${{ filters.min_price }}
+        <button (click)="removeMinPrice()" class="chip-remove-btn">&times;</button>
+      </span>
+      <span *ngIf="filters.max_price" class="filter-chip">
+        Hasta ${{ filters.max_price }}
+        <button (click)="removeMaxPrice()" class="chip-remove-btn">&times;</button>
+      </span>
+      <button (click)="clearFilters()" class="clear-all-link">Limpiar todos</button>
+    </div>
+
+    <!-- Main Content: Sidebar + Grid -->
+    <div class="catalog-layout">
+      <!-- Sidebar Filters (KAN-102 & Semana 10) -->
+      <aside class="catalog-sidebar" [class.mobile-open]="sidebarOpen()">
+        <div class="sidebar-box">
+          <div class="sidebar-top">
+            <h3 class="sidebar-heading">Filtros</h3>
+            <button *ngIf="activeFilterCount > 0" (click)="clearFilters()" class="sidebar-reset-btn">
+              Restablecer ({{ activeFilterCount }})
+            </button>
+          </div>
+
+          <!-- Categorías -->
+          <div class="filter-group">
+            <h4 class="group-title">Categoría</h4>
+            <div class="categories-list">
+              <label *ngFor="let cat of categories" class="radio-label">
+                <input 
+                  type="radio" 
+                  name="category" 
+                  [checked]="filters.category === cat" 
+                  (change)="setCategory(cat)"
+                  class="sr-only"
+                />
+                <span class="custom-radio" [class.checked]="filters.category === cat"></span>
+                <span class="radio-text" [class.selected]="filters.category === cat">{{ cat }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Talles EU -->
+          <div class="filter-group">
+            <h4 class="group-title">Talle (EU)</h4>
+            <div class="sizes-grid">
+              <button 
+                *ngFor="let size of sizes" 
+                (click)="toggleSize(size)"
+                class="size-filter-btn"
+                [class.active]="isSizeSelected(size)"
+              >
+                {{ size }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Colores -->
+          <div class="filter-group">
+            <h4 class="group-title">Color</h4>
+            <div class="colors-wrap">
+              <button 
+                *ngFor="let col of colors" 
+                (click)="toggleColor(col)"
+                class="color-pill"
+                [class.active]="isColorSelected(col)"
+              >
+                {{ col }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Rango de Precios -->
+          <div class="filter-group">
+            <h4 class="group-title">Precio ($)</h4>
+            <div class="price-inputs">
+              <input 
+                type="number" 
+                [(ngModel)]="filters.min_price" 
+                (change)="applyPriceFilter()"
+                placeholder="Min" 
+                class="price-input"
+              />
+              <span class="price-separator">-</span>
+              <input 
+                type="number" 
+                [(ngModel)]="filters.max_price" 
+                (change)="applyPriceFilter()"
+                placeholder="Max" 
+                class="price-input"
+              />
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Products Grid Area -->
+      <main class="catalog-main">
+        <!-- 9 Animated Skeletons during Loading (KAN-98) -->
+        <div *ngIf="loading()" class="products-grid">
+          <div *ngFor="let sk of skeletons" class="skeleton-card">
+            <div class="skeleton-img animate-pulse"></div>
+            <div class="skeleton-line-1 animate-pulse"></div>
+            <div class="skeleton-line-2 animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Empty State (KAN-98) -->
+        <div *ngIf="!loading() && products().length === 0" class="empty-state">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="empty-state-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <p class="empty-title">No se encontraron productos</p>
+          <button (click)="clearFilters()" class="btn-primary mt-4">
+            Limpiar filtros
+          </button>
+        </div>
+
+        <!-- Products List Grid -->
+        <div *ngIf="!loading() && products().length > 0" class="products-grid">
+          <app-product-card 
+            *ngFor="let prod of products()" 
+            [product]="prod"
+          ></app-product-card>
+        </div>
+
+        <!-- Pagination Controls (KAN-98) -->
+        <div *ngIf="!loading() && lastPage() > 1" class="pagination-wrapper">
+          <div class="pagination-buttons">
+            <button 
+              *ngFor="let p of getPageNumbers()" 
+              (click)="setPage(p)"
+              class="page-btn"
+              [class.active]="currentPage() === p"
+            >
+              {{ p }}
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

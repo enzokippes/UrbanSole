@@ -1,0 +1,35 @@
+<div class="product-card group">
+  <a [routerLink]="['/product', product.id]" class="image-wrapper">
+    <img [src]="primaryImage" [alt]="product.name" class="product-img" loading="lazy" />
+    <span *ngIf="product.category" class="category-badge">{{ product.category }}</span>
+  </a>
+
+  <div class="card-info">
+    <span class="brand-text">{{ product.brand }}</span>
+    <a [routerLink]="['/product', product.id]" class="title-link">
+      <h3 class="product-title" [title]="product.name">{{ product.name }}</h3>
+    </a>
+
+    <!-- Available sizes preview -->
+    <div *ngIf="product.available_sizes && product.available_sizes.length > 0" class="sizes-row">
+      <span *ngFor="let s of product.available_sizes.slice(0, 4)" class="size-pill">
+        {{ s }}
+      </span>
+      <span *ngIf="product.available_sizes.length > 4" class="size-more">
+        +{{ product.available_sizes.length - 4 }}
+      </span>
+    </div>
+
+    <div class="card-bottom">
+      <div class="price-container">
+        <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
+        <span *ngIf="product.original_price" class="old-price">${{ product.original_price | number:'1.2-2' }}</span>
+      </div>
+      <button (click)="quickAdd()" class="add-btn" title="Agregar al carrito">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="add-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
