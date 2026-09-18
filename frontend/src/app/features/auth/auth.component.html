@@ -1,0 +1,146 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Brand Header -->
+    <div class="auth-header">
+      <div class="auth-logo">US</div>
+      <h2 class="auth-title">URBAN<span class="auth-accent">SOLE</span></h2>
+      <p class="auth-subtitle">Accedé a tu cuenta o registrate para comenzar</p>
+    </div>
+
+    <!-- Tab Switcher -->
+    <div class="auth-tabs">
+      <button 
+        (click)="toggleMode(true)" 
+        class="tab-btn" 
+        [class.active]="isLoginMode()"
+      >
+        Ingresar
+      </button>
+      <button 
+        (click)="toggleMode(false)" 
+        class="tab-btn" 
+        [class.active]="!isLoginMode()"
+      >
+        Registrarse
+      </button>
+    </div>
+
+    <!-- Feedback Alerts -->
+    <div *ngIf="errorMessage()" class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form *ngIf="isLoginMode()" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form">
+      <div class="form-group">
+        <label for="login-email" class="form-label">Correo Electrónico</label>
+        <input 
+          id="login-email" 
+          type="email" 
+          formControlName="email" 
+          placeholder="tu@email.com" 
+          class="form-input"
+          [class.invalid]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+        />
+        <span *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" class="field-error">
+          Ingresá un correo electrónico válido.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="login-password" class="form-label">Contraseña</label>
+        <div class="password-wrapper">
+          <input 
+            id="login-password" 
+            [type]="showPassword() ? 'text' : 'password'" 
+            formControlName="password" 
+            placeholder="••••••••" 
+            class="form-input"
+            [class.invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+          />
+          <button type="button" (click)="togglePasswordVisibility()" class="toggle-pw-btn">
+            {{ showPassword() ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+        <span *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" class="field-error">
+          La contraseña debe tener al menos 8 caracteres.
+        </span>
+      </div>
+
+      <button type="submit" [disabled]="loading()" class="btn-primary auth-submit-btn">
+        <span *ngIf="!loading()">Iniciar Sesión</span>
+        <span *ngIf="loading()">Cargando...</span>
+      </button>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form *ngIf="!isLoginMode()" [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
+      <div class="form-group">
+        <label for="reg-name" class="form-label">Nombre Completo</label>
+        <input 
+          id="reg-name" 
+          type="text" 
+          formControlName="name" 
+          placeholder="Juan Pérez" 
+          class="form-input"
+          [class.invalid]="registerForm.get('name')?.touched && registerForm.get('name')?.invalid"
+        />
+        <span *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.invalid" class="field-error">
+          El nombre es requerido.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="reg-email" class="form-label">Correo Electrónico</label>
+        <input 
+          id="reg-email" 
+          type="email" 
+          formControlName="email" 
+          placeholder="tu@email.com" 
+          class="form-input"
+          [class.invalid]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
+        />
+        <span *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" class="field-error">
+          Ingresá un correo electrónico válido.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="reg-password" class="form-label">Contraseña (mínimo 8 caracteres)</label>
+        <div class="password-wrapper">
+          <input 
+            id="reg-password" 
+            [type]="showPassword() ? 'text' : 'password'" 
+            formControlName="password" 
+            placeholder="••••••••" 
+            class="form-input"
+            [class.invalid]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
+          />
+          <button type="button" (click)="togglePasswordVisibility()" class="toggle-pw-btn">
+            {{ showPassword() ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+        <span *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" class="field-error">
+          La contraseña debe tener al menos 8 caracteres.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="reg-confirm" class="form-label">Confirmar Contraseña</label>
+        <input 
+          id="reg-confirm" 
+          type="password" 
+          formControlName="password_confirmation" 
+          placeholder="••••••••" 
+          class="form-input"
+          [class.invalid]="registerForm.get('password_confirmation')?.touched && registerForm.get('password_confirmation')?.invalid"
+        />
+      </div>
+
+      <button type="submit" [disabled]="loading()" class="btn-primary auth-submit-btn">
+        <span *ngIf="!loading()">Crear Cuenta</span>
+        <span *ngIf="loading()">Procesando...</span>
+      </button>
+    </form>
+  </div>
+</div>
