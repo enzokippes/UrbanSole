@@ -171,6 +171,10 @@ class CatalogTest extends TestCase
         $this->assertNotContains('Azul', $firstProduct['available_colors']);
     }
 
+    /**
+     * Matriz de pruebas de integración para Historia 2.2:
+     * Filtrado combinatorio multicriterio (Categoría + 2 Talles + 1 Color + Rango de precio) y ordenamiento con whitelist.
+     */
     public function test_filtrado_combinatorio_categoria_dos_talles_un_color_y_rango_de_precios(): void
     {
         // 1. Producto que cumple todas las condiciones
