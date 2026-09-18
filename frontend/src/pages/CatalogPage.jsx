@@ -133,7 +133,7 @@ export default function CatalogPage() {
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               id="filter-toggle-btn"
-              className="flex items-center gap-2 bg-white/8 border border-white/10 text-white text-sm rounded-xl py-2 px-3 hover:bg-white/12 transition-colors"
+              className="flex items-center gap-2 bg-white/8 border border-white/10 text-white text-sm rounded-xl py-2 px-3 hover:bg-white/12 transition-colors lg:hidden"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filtros
