@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --animate-spin-slow: spin 8s linear infinite;
+  --animate-fade-up: fade-up 0.6s ease-out forwards;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+:root {
+  --bg-main: #0a0a0a;
+  --bg-surface: #111111;
+  --bg-card: #161616;
+  --bg-hover: #222222;
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-faint: rgba(255, 255, 255, 0.35);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --nav-glass: rgba(10, 10, 10, 0.75);
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #000000;
+  --tag-bg: rgba(255, 255, 255, 0.08);
+}
+
+html.light {
+  --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-faint: #94a3b8;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --nav-glass: rgba(248, 250, 252, 0.85);
+  --btn-primary-bg: #0f172a;
+  --btn-primary-text: #ffffff;
+  --tag-bg: rgba(0, 0, 0, 0.05);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Model Viewer */
+model-viewer {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  --poster-color: transparent;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #888888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html.light .gradient-text {
+  background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Text outline effect */
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+  color: transparent;
+}
+
+html.light .text-stroke {
+  -webkit-text-stroke: 1px rgba(15, 23, 42, 0.2);
+  color: transparent;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+html.light .card-hover:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Button press effect */
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Glass effect */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Animation utilities */
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+
+/* ── Light Mode Color Adaptations ── */
+html.light .bg-\[\#0a0a0a\] {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-\[\#0d0d0d\],
+html.light .bg-\[\#111\],
+html.light .bg-\[\#111111\],
+html.light .bg-\[\#121212\] {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-\[\#141414\],
+html.light .bg-\[\#161616\],
+html.light .bg-\[\#1a1a1a\] {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .from-\[\#0a0a0a\] {
+  --tw-gradient-from: #f8fafc !important;
+}
+html.light .via-\[\#0d0d0d\] {
+  --tw-gradient-stops: var(--tw-gradient-from), #ffffff, var(--tw-gradient-to) !important;
+}
+html.light .to-\[\#111\] {
+  --tw-gradient-to: #f1f5f9 !important;
+}
+
+html.light .text-white {
+  color: #0f172a !important;
+}
+html.light .text-white\/90 {
+  color: #1e293b !important;
+}
+html.light .text-white\/70,
+html.light .text-white\/60,
+html.light .text-white\/50 {
+  color: #475569 !important;
+}
+html.light .text-white\/40,
+html.light .text-white\/30,
+html.light .text-white\/20 {
+  color: #64748b !important;
+}
+
+html.light .border-white\/5,
+html.light .border-white\/8,
+html.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light .border-white\/15,
+html.light .border-white\/20,
+html.light .border-white\/30 {
+  border-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+html.light .bg-white {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+html.light .bg-white\/5,
+html.light .bg-white\/8,
+html.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+html.light .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .text-black {
+  color: #ffffff !important;
+}
+
+html.light .bg-black,
+html.light .bg-black\/60,
+html.light .bg-black\/70,
+html.light .bg-black\/80 {
+  background-color: rgba(15, 23, 42, 0.75) !important;
+}
+
+/* Button & Badge Contrast in Light Mode */
+html.light .btn-primary {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+html.light input,
+html.light select,
+html.light textarea {
+  color: #0f172a !important;
+}
+html.light input::placeholder {
+  color: #94a3b8 !important;
+}
