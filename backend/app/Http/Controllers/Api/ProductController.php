@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    /**
+     * Query Builder con filtros dinámicos multicriterio (categoría, talles con stock, colores JSON, rango de precios y ordenamiento).
+     */
     public function index(Request $request)
     {
         $query = Product::with('variants')->active();
