@@ -30,6 +30,31 @@ Como nuevo cliente, quiero crear una cuenta con mis datos personales y contrase�
 
 ---
 
+## Historia de Usuario 1.2: Control de Acceso Basado en Roles (RBAC) y Manejo de Sesión Expirada
+
+Como administrador de seguridad del sistema, quiero restringir rutas protegidas según el rol del usuario y cerrar sesiones expiradas para salvaguardar los datos de la plataforma.
+
+### Tareas del Sprint
+
+1. **[BACK] Middleware de protección de rutas y Middleware de Administrador en IsAdmin.php**
+   - Creación del middleware `IsAdmin.php` verificando `$request->user()->isAdmin()`, respondiendo HTTP 403 ante accesos no autorizados.
+   - Registro del alias de middleware `is.admin` en `bootstrap/app.php`.
+   - Grupo de rutas con prefijo `/admin` protegido por `auth:sanctum` y `is.admin`.
+   - Revocación de tokens en logout mediante `$request->user()->currentAccessToken()->delete()`.
+
+2. **[FRONT] Configurar Route Guards y Axios Interceptors en App.jsx y api/index.js**
+   - Componentes envoltorios `ProtectedRoute` (redirige a `/login` si no hay usuario) y `AdminRoute` (redirige a `/` si el usuario no es admin).
+   - Inyección automática de token Bearer en cabeceras de Axios.
+   - Interceptor global de respuestas que captura errores HTTP 401, purga el almacenamiento local (`urbansole_token`, `urbansole_user`) y redirige a `/login`.
+
+3. **[QA] Pruebas de Seguridad y Restricción de Roles (RBAC)**
+   - Pruebas funcionales en `SecurityTest.php` verificando respuesta 403 para usuarios con rol `customer` en rutas `/api/admin/*`.
+   - Verificación de acceso permitido 200 para usuarios con rol `admin`.
+   - Comprobación en base de datos de que el logout revoca efectivamente el token de `personal_access_tokens`.
+   - Verificación de error 401 ante peticiones sin token en rutas protegidas.
+
+---
+
 ## Puesta en Marcha
 
 ### Backend (Laravel)
