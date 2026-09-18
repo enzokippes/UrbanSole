@@ -7,13 +7,7 @@ import { CartDrawerComponent } from './shared/components/cart-drawer/cart-drawer
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, CartDrawerComponent],
-  template: 
-    <app-navbar></app-navbar>
-    <main class="min-h-screen">
-      <router-outlet></router-outlet>
-    </main>
-    <app-cart-drawer></app-cart-drawer>
-  ,
+  templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {}
