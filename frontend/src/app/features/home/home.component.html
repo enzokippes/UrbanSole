@@ -1,0 +1,153 @@
+<div class="home-page">
+  <!-- ─── HERO SECTION ─────────────────────────────────── -->
+  <section class="hero-section">
+    <div class="hero-bg-glow"></div>
+    <div class="container hero-container">
+      <div class="hero-grid">
+        <!-- Left: Headline & Actions -->
+        <div class="hero-text-col">
+          <p class="hero-tag">Nueva Colección 2024</p>
+          <h1 class="hero-title">
+            <span class="title-wear">WEAR</span><br />
+            <span class="title-your">YOUR</span><br />
+            <span class="title-soul">SOUL</span>
+          </h1>
+
+          <p class="hero-desc">
+            Las zapatillas que definen quién sos. Explorá cada par con modelos interactivos y detalles de alta calidad.
+          </p>
+
+          <div class="hero-actions">
+            <a routerLink="/catalog" class="btn-primary hero-btn-primary">
+              Ver Catálogo
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-arrow">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </a>
+            <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Hombre' }" class="btn-secondary hero-btn-secondary">
+              Destacados
+            </a>
+          </div>
+
+          <!-- Stats -->
+          <div class="hero-stats">
+            <div *ngFor="let s of stats" class="stat-item">
+              <span class="stat-number">{{ s.num }}</span>
+              <span class="stat-label">{{ s.label }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Showcase Image & Floating Badges -->
+        <div class="hero-visual-col">
+          <div class="visual-wrapper">
+            <div class="glow-ring"></div>
+            <img src="/images/jordan-chicago.jpg" alt="Air Jordan 1 Chicago" class="hero-shoe-img" />
+            
+            <div class="badge-float badge-top-right">
+              <p class="badge-name">Air Jordan 1 High</p>
+              <p class="badge-price">Desde $180</p>
+            </div>
+            
+            <div class="badge-float badge-bottom-left">
+              <p class="badge-subtitle">Diseño Urbano</p>
+              <p class="badge-title">Iconic Heritage</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CATEGORIES SECTION ───────────────────────────── -->
+  <section class="container py-16">
+    <div class="categories-grid">
+      <a *ngFor="let cat of categories" 
+         [routerLink]="['/catalog']" 
+         [queryParams]="{ category: cat.query }"
+         class="category-card"
+      >
+        <span class="cat-count">{{ cat.count }}</span>
+        <h2 class="cat-title">{{ cat.label }}</h2>
+        <p class="cat-desc">{{ cat.desc }}</p>
+        <div class="cat-arrow">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ─── FEATURED PRODUCTS ────────────────────────────── -->
+  <section class="container py-16">
+    <div class="section-header">
+      <div>
+        <p class="section-tag">Selección especial</p>
+        <h2 class="section-title">Destacados</h2>
+      </div>
+      <a routerLink="/catalog" class="view-all-link">
+        Ver todos
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="arrow-small">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Loading Skeletons -->
+    <div *ngIf="loading()" class="products-grid">
+      <div *ngFor="let i of [1,2,3,4]" class="skeleton-card">
+        <div class="skeleton-img animate-pulse"></div>
+        <div class="skeleton-line-1 animate-pulse"></div>
+        <div class="skeleton-line-2 animate-pulse"></div>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div *ngIf="!loading()" class="products-grid">
+      <app-product-card 
+        *ngFor="let product of featuredProducts()" 
+        [product]="product"
+      ></app-product-card>
+    </div>
+
+    <div class="catalog-cta-wrap">
+      <a routerLink="/catalog" class="btn-secondary px-8 py-3">
+        Explorar catálogo completo
+      </a>
+    </div>
+  </section>
+
+  <!-- ─── BRAND STRIP ──────────────────────────────────── -->
+  <section class="brand-strip">
+    <div class="container">
+      <p class="strip-label">Líneas y Colecciones UrbanSole</p>
+      <div class="brands-row">
+        <span>Air Force 1</span>
+        <span>Air Jordan</span>
+        <span>Air Max</span>
+        <span>Dunk Low</span>
+        <span>Retro Runner</span>
+        <span>Precision</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ───────────────────────────────────────── -->
+  <footer class="home-footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <div class="logo-box">US</div>
+        <span class="brand-title">URBAN<span class="brand-accent">SOLE</span></span>
+      </div>
+      <p class="footer-copy">
+        UrbanSole &copy; 2026. E-Commerce oficial para Programación IV (UTN Concordia).
+      </p>
+      <div class="footer-links">
+        <a routerLink="/catalog">Catálogo</a>
+        <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Hombre' }">Hombre</a>
+        <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Mujer' }">Mujer</a>
+      </div>
+    </div>
+  </footer>
+</div>

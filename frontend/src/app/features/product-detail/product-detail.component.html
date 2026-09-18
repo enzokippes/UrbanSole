@@ -1,0 +1,117 @@
+<div class="product-detail-page">
+  <div class="container py-10">
+    <!-- Back to Catalog Link -->
+    <a routerLink="/catalog" class="back-link">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="back-arrow">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver al catálogo
+    </a>
+
+    <!-- Loading State -->
+    <div *ngIf="loading()" class="detail-loading">
+      <div class="loading-grid">
+        <div class="skeleton-detail-img animate-pulse"></div>
+        <div class="skeleton-detail-info">
+          <div class="skeleton-line-1 animate-pulse mb-4"></div>
+          <div class="skeleton-line-2 animate-pulse mb-6"></div>
+          <div class="skeleton-line-1 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!loading() && error()" class="detail-error">
+      <p>{{ error() }}</p>
+      <a routerLink="/catalog" class="btn-primary mt-4">Ver otros modelos</a>
+    </div>
+
+    <!-- Product Content -->
+    <div *ngIf="!loading() && product()" class="detail-grid">
+      <!-- Left: Image Gallery -->
+      <div class="gallery-col">
+        <div class="main-image-wrap">
+          <img [src]="activeImage() || product()?.images?.[0] || '/images/jordan-chicago.jpg'" [alt]="product()?.name" class="main-img" />
+          <span *ngIf="product()?.category" class="cat-floating-badge">{{ product()?.category }}</span>
+        </div>
+
+        <!-- Thumbnails -->
+        <div *ngIf="product()?.images && (product()?.images)!.length > 1" class="thumbnails-row">
+          <button 
+            *ngFor="let img of product()?.images" 
+            (click)="setImage(img)" 
+            class="thumb-btn"
+            [class.active]="activeImage() === img"
+          >
+            <img [src]="img" [alt]="product()?.name" class="thumb-img" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Info, Selectors & Buy Action -->
+      <div class="info-col">
+        <div class="info-header">
+          <span class="product-brand">{{ product()?.brand }}</span>
+          <h1 class="product-title">{{ product()?.name }}</h1>
+          
+          <div class="price-row">
+            <span class="price-val">${{ product()?.price | number:'1.2-2' }}</span>
+            <span *ngIf="product()?.original_price" class="old-price-val">
+              ${{ product()?.original_price | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+
+        <p class="product-description">{{ product()?.description }}</p>
+
+        <!-- Color Selector -->
+        <div *ngIf="product()?.colors && (product()?.colors)!.length > 0" class="selection-group">
+          <h3 class="selection-title">Color: <span class="selected-text">{{ selectedColor() }}</span></h3>
+          <div class="color-options">
+            <button 
+              *ngFor="let col of product()?.colors" 
+              (click)="selectColor(col)"
+              class="color-btn"
+              [class.active]="selectedColor() === col"
+            >
+              {{ col }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Size Selector -->
+        <div *ngIf="product()?.available_sizes && (product()?.available_sizes)!.length > 0" class="selection-group">
+          <h3 class="selection-title">Talle (EU): <span class="selected-text">{{ selectedSize() }}</span></h3>
+          <div class="size-options">
+            <button 
+              *ngFor="let sz of product()?.available_sizes" 
+              (click)="selectSize(sz)"
+              class="size-btn"
+              [class.active]="selectedSize() === sz"
+            >
+              {{ sz }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Add to Cart CTA -->
+        <div class="actions-wrapper">
+          <button (click)="addToCart()" class="btn-primary buy-btn">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="cart-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+            <span *ngIf="!addedSuccess()">Agregar al Carrito</span>
+            <span *ngIf="addedSuccess()">¡Agregado con éxito! ✓</span>
+          </button>
+        </div>
+
+        <!-- Tags -->
+        <div *ngIf="product()?.tags && (product()?.tags)!.length > 0" class="tags-row">
+          <span *ngFor="let tg of product()?.tags" class="tag-badge">
+            #{{ tg }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
