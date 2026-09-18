@@ -22,17 +22,17 @@ class ProductController extends Controller
             });
         }
 
-        // Category filter
+        // Filtro por categoria
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
-        // Featured filter
+        // Filtro destacados
         if ($request->filled('featured')) {
             $query->featured();
         }
 
-        // Color filter
+        // Filtro por color (JSON contains sobre lista separada por comas)
         if ($request->filled('color')) {
             $colors = explode(',', $request->color);
             $query->where(function ($q) use ($colors) {
@@ -42,7 +42,7 @@ class ProductController extends Controller
             });
         }
 
-        // Size filter (from variants)
+        // Filtro por talle sobre variantes con stock disponible
         if ($request->filled('size')) {
             $sizes = explode(',', $request->size);
             $query->whereHas('variants', function ($q) use ($sizes) {
@@ -50,7 +50,7 @@ class ProductController extends Controller
             });
         }
 
-        // Price range filter
+        // Filtro por rango de precios (min y max)
         if ($request->filled('min_price')) {
             $query->where('price', '>=', $request->min_price);
         }
@@ -58,7 +58,7 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Sorting
+        // Ordenamiento con whitelist estricta para evitar inyeccion SQL
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDir = $request->get('sort_dir', 'desc');
         $allowedSorts = ['price', 'name', 'created_at'];
