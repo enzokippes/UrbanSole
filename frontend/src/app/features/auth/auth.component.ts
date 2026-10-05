@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -15,6 +15,12 @@ export class AuthComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  private afterLogin(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    this.router.navigateByUrl(returnUrl === '/checkout' ? '/checkout' : '/catalog');
+  }
 
   isLoginMode = signal<boolean>(true);
   loading = signal<boolean>(false);
@@ -56,7 +62,7 @@ export class AuthComponent {
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/catalog']);
+        this.afterLogin();
       },
       error: err => {
         this.loading.set(false);
@@ -83,7 +89,7 @@ export class AuthComponent {
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/catalog']);
+        this.afterLogin();
       },
       error: err => {
         this.loading.set(false);

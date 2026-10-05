@@ -52,6 +52,8 @@
             <p class="dropdown-email">{{ authService.currentUser()?.email }}</p>
             <span *ngIf="authService.isAdmin()" class="role-badge">Admin</span>
           </div>
+          <a routerLink="/orders" class="dropdown-item" (click)="userMenuOpen.set(false)">Mis pedidos</a>
+          <a *ngIf="authService.isAdmin()" routerLink="/admin" class="dropdown-item" (click)="userMenuOpen.set(false)">Administración</a>
           <button (click)="logout()" class="dropdown-item logout-btn">
             Cerrar Sesión
           </button>
@@ -59,7 +61,7 @@
       </div>
 
       <ng-template #loginBtn>
-        <a routerLink="/auth" class="login-link">
+        <a routerLink="/login" class="login-link">
           Ingresar
         </a>
       </ng-template>

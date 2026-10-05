@@ -1,4 +1,6 @@
 import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../../core/services/cart.service';
 
@@ -10,6 +12,8 @@ import { CartService } from '../../../core/services/cart.service';
   styleUrl: './cart-drawer.component.css'
 })
 export class CartDrawerComponent {
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   readonly cartService = inject(CartService);
 
   close(): void {
@@ -29,8 +33,7 @@ export class CartDrawerComponent {
   }
 
   checkout(): void {
-    alert('¡Gracias por tu compra en UrbanSole!');
-    this.cartService.clearCart();
+    this.router.navigate([this.auth.isAuthenticated() ? '/checkout' : '/login'], { queryParams: this.auth.isAuthenticated() ? {} : { returnUrl: '/checkout' } });
     this.close();
   }
 }
