@@ -1,0 +1,16 @@
+<main class="sprint-page">
+<h1>Finalizar compra</h1><p>Confirmá tus datos de entrega. El pedido queda pendiente de confirmación.</p>
+<p *ngIf="error()" role="alert" class="error">{{ error() }}</p>
+<p *ngIf="!cart.items().length">Tu carrito está vacío.</p>
+<form *ngIf="cart.items().length" #checkout="ngForm" (ngSubmit)="submit()">
+<div class="panel"><h2>Datos de entrega</h2><div class="grid">
+<label>Nombre del destinatario<input name="recipient" [(ngModel)]="form.recipient" required maxlength="255" [disabled]="busy()"></label>
+<label>Teléfono<input name="phone" [(ngModel)]="form.phone" required maxlength="40" [disabled]="busy()"></label>
+<label>Dirección<input name="address" [(ngModel)]="form.address" required maxlength="255" [disabled]="busy()"></label>
+<label>Ciudad<input name="city" [(ngModel)]="form.city" required maxlength="255" [disabled]="busy()"></label>
+<label>Código postal<input name="postal_code" [(ngModel)]="form.postal_code" required maxlength="20" [disabled]="busy()"></label>
+</div></div>
+<div class="panel"><h2>Resumen</h2><div class="row" *ngFor="let item of cart.items()"><span>{{ item.product.name }} · {{ item.size }} · {{ item.color }} × {{ item.quantity }}</span><strong>{{ item.price * item.quantity | currency:'ARS':'symbol':'1.2-2' }}</strong></div>
+<p>Envío: sin cargo</p><p>Total estimado: {{ cart.total() | currency:'ARS':'symbol':'1.2-2' }}</p><p>El precio y el stock se verifican al confirmar. No se realiza un cobro en línea.</p>
+<button class="btn-primary" [disabled]="checkout.invalid || busy()">{{ busy() ? 'Confirmando…' : 'Confirmar pedido' }}</button></div>
+</form></main>
