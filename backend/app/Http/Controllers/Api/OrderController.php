@@ -76,4 +76,31 @@ class OrderController extends Controller
 
         return response()->json($order, 201);
     }
+
+    public function cancel(Request $request, int $id)
+    {
+        return DB::transaction(function () use ($request, $id) {
+            $order = $request->user()->orders()->whereKey($id)->lockForUpdate()->firstOrFail();
+
+            if ($order->status !== 'pending') {
+                throw ValidationException::withMessages([
+                    'status' => 'Solo se pueden cancelar pedidos en estado pendiente.',
+                ]);
+            }
+
+            $items = $order->items()->orderBy('product_variant_id')->get();
+            foreach ($items as $item) {
+                if ($item->product_variant_id) {
+                    ProductVariant::whereKey($item->product_variant_id)->lockForUpdate()->first()?->increment('stock', $item->quantity);
+                }
+            }
+
+            $order->update(['status' => 'cancelled']);
+
+            return response()->json([
+                'message' => 'Pedido cancelado correctamente.',
+                'order' => $order->load('items'),
+            ]);
+        }, 3);
+    }
 }

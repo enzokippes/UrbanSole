@@ -118,4 +118,41 @@ class AuthTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['email']);
     }
+
+    public function test_actualizar_perfil_exitoso()
+    {
+        $user = User::create([
+            'name' => 'Original',
+            'email' => 'original@test.com',
+            'password' => Hash::make('password123'),
+            'role' => 'customer',
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/auth/profile', [
+            'name' => 'Nombre Actualizado',
+            'email' => 'original@test.com',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('user.name', 'Nombre Actualizado');
+    }
+
+    public function test_cambiar_password_exitoso()
+    {
+        $user = User::create([
+            'name' => 'User Password',
+            'email' => 'password@test.com',
+            'password' => Hash::make('password123'),
+            'role' => 'customer',
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/auth/password', [
+            'current_password' => 'password123',
+            'password' => 'nuevopassword123',
+            'password_confirmation' => 'nuevopassword123',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertTrue(Hash::check('nuevopassword123', $user->fresh()->password));
+    }
 }
