@@ -142,4 +142,19 @@ class OrdersTest extends TestCase
         $this->actingAs($owner);
         $this->getJson('/api/orders/'.$id)->assertOk()->assertJsonPath('items.0.product_name', 'Shoe');
     }
+
+    public function test_customer_can_cancel_pending_order_and_restores_stock(): void
+    {
+        $owner = $this->user();
+        $this->actingAs($owner);
+        $v = $this->variant();
+        $id = $this->postJson('/api/orders', $this->payload($v))->assertCreated()->json('id');
+        $this->assertEquals(3, $v->fresh()->stock);
+
+        $this->postJson('/api/orders/'.$id.'/cancel')->assertOk()->assertJsonPath('order.status', 'cancelled');
+        $this->assertEquals(5, $v->fresh()->stock);
+
+        // No se puede cancelar nuevamente
+        $this->postJson('/api/orders/'.$id.'/cancel')->assertUnprocessable();
+    }
 }

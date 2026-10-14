@@ -148,4 +148,19 @@ class AdminController extends Controller
             return $order->load('items');
         }, 3);
     }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ]);
+
+        $path = $request->file('image')->store('products', 'public');
+
+        return response()->json([
+            'url' => asset('storage/' . $path),
+            'path' => $path,
+            'message' => 'Imagen subida correctamente.',
+        ], 201);
+    }
 }

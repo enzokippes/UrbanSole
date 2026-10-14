@@ -25,10 +25,13 @@ Route::get('/categories', [ProductController::class, 'categories']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/user', [AuthController::class, 'user']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/auth/password', [AuthController::class, 'changePassword']);
 
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
 
     // Admin routes (requires admin role)
     Route::prefix('admin')->middleware('is.admin')->group(function () {
@@ -37,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/products', [AdminController::class, 'storeProduct']);
         Route::put('/products/{id}', [AdminController::class, 'updateProduct']);
         Route::delete('/products/{id}', [AdminController::class, 'destroyProduct']);
+        Route::post('/upload', [AdminController::class, 'uploadImage']);
         Route::get('/orders', [AdminController::class, 'orders']);
         Route::patch('/orders/{id}', [AdminController::class, 'updateOrder']);
     });
