@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('original_price', 10, 2)->nullable();
             $table->enum('category', ['Hombre', 'Mujer', 'Niño']);
             $table->string('model_3d_url')->nullable(); // GLB file URL
+            $table->json('color_models')->nullable();   // Map of color name => GLB file URL
             $table->json('images')->nullable();         // Array of image URLs
             $table->json('color_images')->nullable();   // Map of color name => image URL
             $table->json('colors')->nullable();         // Available colors

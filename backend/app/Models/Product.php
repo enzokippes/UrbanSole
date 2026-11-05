@@ -19,6 +19,7 @@ class Product extends Model
         'original_price',
         'category',
         'model_3d_url',
+        'color_models',
         'images',
         'color_images',
         'colors',
@@ -30,6 +31,7 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
+        'color_models' => 'array',
         'images' => 'array',
         'color_images' => 'array',
         'colors' => 'array',
