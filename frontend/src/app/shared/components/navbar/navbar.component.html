@@ -58,6 +58,9 @@
             <p class="dropdown-email">{{ authService.currentUser()?.email }}</p>
             <span *ngIf="authService.isAdmin()" class="role-badge">Admin</span>
           </div>
+          <a routerLink="/orders" class="dropdown-item" (click)="userMenuOpen.set(false)" style="display:block;text-decoration:none;color:#fff;">
+            Mis pedidos
+          </a>
           <a *ngIf="authService.isAdmin()" routerLink="/admin" (click)="userMenuOpen.set(false)" class="dropdown-item" style="display:block;text-decoration:none;color:#fff;">
             Panel de Administración
           </a>
@@ -105,6 +108,9 @@
          (click)="mobileMenuOpen.set(false)"
          class="mobile-link">
         {{ cat.label }}
+      </a>
+      <a *ngIf="authService.isAuthenticated()" routerLink="/orders" (click)="mobileMenuOpen.set(false)" class="mobile-link">
+        Mis pedidos
       </a>
       <a *ngIf="authService.isAdmin()" routerLink="/admin" (click)="mobileMenuOpen.set(false)" class="mobile-link">
         Panel Admin

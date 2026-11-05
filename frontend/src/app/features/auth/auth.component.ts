@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -13,8 +13,20 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class AuthComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  private afterLogin(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl === '/checkout') {
+      this.router.navigateByUrl('/checkout');
+    } else if (this.authService.isAdmin()) {
+      this.router.navigate(['/admin']);
+    } else {
+      this.router.navigate(['/catalog']);
+    }
+  }
 
   isLoginMode = signal<boolean>(true);
   loading = signal<boolean>(false);
@@ -44,30 +56,6 @@ export class AuthComponent {
     this.showPassword.update(prev => !prev);
   }
 
-  fillDemoCredentials(role: 'admin' | 'customer'): void {
-    this.isLoginMode.set(true);
-    this.loginForm.patchValue({
-      email: role === 'admin' ? 'admin@urbansole.com' : 'demo@urbansole.com',
-      password: 'password'
-    });
-    this.onLogin();
-  }
-
-  onSocialLogin(provider: 'google' | 'github'): void {
-    this.loading.set(true);
-    this.errorMessage.set(null);
-    this.authService.socialLogin(provider).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.router.navigate(['/catalog']);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.errorMessage.set('Error al autenticar con el proveedor externo.');
-      }
-    });
-  }
-
   onLogin(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -78,15 +66,11 @@ export class AuthComponent {
     this.errorMessage.set(null);
 
     this.authService.login(this.loginForm.value).subscribe({
-      next: res => {
+      next: () => {
         this.loading.set(false);
-        if (res.user?.role === 'admin') {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/catalog']);
-        }
+        this.afterLogin();
       },
-      error: err => {
+      error: (err: any) => {
         this.loading.set(false);
         const msg = err.error?.message || 'Credenciales incorrectas o error en el servidor.';
         this.errorMessage.set(msg);
@@ -111,13 +95,47 @@ export class AuthComponent {
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/catalog']);
+        this.afterLogin();
       },
-      error: err => {
+      error: (err: any) => {
         this.loading.set(false);
         const msg = err.error?.message || 'Error al registrar el usuario.';
         this.errorMessage.set(msg);
       }
     });
+  }
+
+  /**
+   * Semana 7: Autenticación con Proveedor Externo OAuth 2.0 (Google / GitHub)
+   */
+  onSocialLogin(provider: 'google' | 'github'): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.socialLogin(provider).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.afterLogin();
+      },
+      error: (err: any) => {
+        this.loading.set(false);
+        this.errorMessage.set(err.error?.message || `Error en autenticación con ${provider}.`);
+      }
+    });
+  }
+
+  fillDemoCredentials(role: 'admin' | 'customer'): void {
+    this.isLoginMode.set(true);
+    if (role === 'admin') {
+      this.loginForm.patchValue({
+        email: 'admin@urbansole.com',
+        password: 'password'
+      });
+    } else {
+      this.loginForm.patchValue({
+        email: 'customer@urbansole.com',
+        password: 'password'
+      });
+    }
   }
 }

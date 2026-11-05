@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\Services\N8nWebhookService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -17,6 +23,7 @@ class AdminController extends Controller
 
     public function stats()
     {
+        $sales = Order::whereIn('status', ['confirmed', 'shipped', 'delivered']);
         $totalProducts = Product::count();
         $activeProducts = Product::where('active', true)->count();
         $models3dCount = Product::whereNotNull('model_3d_url')->count();
@@ -34,6 +41,12 @@ class AdminController extends Controller
             'active_products' => $activeProducts,
             'models_3d_count' => $models3dCount,
             'total_stock' => (int) $totalStock,
+            'total_orders' => Order::count(),
+            'pending_orders' => Order::where('status', 'pending')->count(),
+            'sales_total' => (clone $sales)->sum('total') ?? 0,
+            'average_order' => (clone $sales)->avg('total') ?? 0,
+            'low_stock_variants' => ProductVariant::where('stock', '<=', 3)->count(),
+            'orders_by_status' => Order::selectRaw('status, COUNT(*) as count')->groupBy('status')->get(),
             'by_category' => $byCategory,
             'n8n_config' => [
                 'webhook_url' => config('services.n8n.webhook_url'),
@@ -42,6 +55,161 @@ class AdminController extends Controller
             ],
             'message' => 'Admin stats access granted',
         ]);
+    }
+
+    public function products()
+    {
+        return Product::with('variants')->latest('id')->paginate(20);
+    }
+
+    public function storeProduct(Request $request)
+    {
+        return $this->saveProduct($request, null);
+    }
+
+    public function updateProduct(Request $request, int $id)
+    {
+        return $this->saveProduct($request, $id);
+    }
+
+    private function saveProduct(Request $request, ?int $id)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'brand' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category' => ['required', Rule::in(['Hombre', 'Mujer', 'Niño'])],
+            'price' => 'required|numeric|min:0.01|max:99999999.99',
+            'original_price' => 'nullable|numeric|min:0|max:99999999.99',
+            'active' => 'required|boolean',
+            'featured' => 'required|boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'string|max:2048',
+            'color_images' => 'nullable|array',
+            'color_images.*' => 'string|max:2048',
+            'model_3d_url' => 'nullable|string|max:255',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:255',
+            'variants' => 'required|array|min:1|max:200',
+            'variants.*.id' => 'nullable|integer',
+            'variants.*.size' => 'required|string|max:255',
+            'variants.*.color' => 'required|string|max:255',
+            'variants.*.stock' => 'required|integer|min:0|max:1000000',
+        ]);
+
+        $product = DB::transaction(function () use ($data, $id) {
+            $product = $id ? Product::whereKey($id)->lockForUpdate()->firstOrFail() : new Product;
+            $existing = $id ? $product->variants()->orderBy('id')->lockForUpdate()->get()->keyBy('id') : collect();
+            $pairs = [];
+            $retained = [];
+            foreach ($data['variants'] as $variant) {
+                $pair = json_encode([$variant['size'], $variant['color']]);
+                if (isset($pairs[$pair])) {
+                    throw ValidationException::withMessages(['variants' => 'Hay variantes repetidas.']);
+                }
+                $pairs[$pair] = true;
+                if (! empty($variant['id'])) {
+                    if (! $existing->has($variant['id']) || in_array($variant['id'], $retained)) {
+                        throw ValidationException::withMessages(['variants' => 'La variante no pertenece a este producto o está repetida.']);
+                    }
+                    $old = $existing->get($variant['id']);
+                    if (($old->size !== $variant['size'] || $old->color !== $variant['color']) && OrderItem::where('product_variant_id', $old->id)->exists()) {
+                        throw ValidationException::withMessages(['variants' => 'Una variante con pedidos conserva su talle y color. Creá una variante nueva.']);
+                    }
+                    $retained[] = $variant['id'];
+                }
+            }
+            $removed = $existing->keys()->diff($retained);
+            if (OrderItem::whereIn('product_variant_id', $removed)->exists()) {
+                throw ValidationException::withMessages(['variants' => 'No se puede quitar una variante con pedidos. Conservála y ajustá su stock.']);
+            }
+            $product->fill(collect($data)->except('variants')->all());
+            if (! $id) {
+                $product->slug = Str::slug($data['name']).'-'.Str::lower(Str::random(8));
+            }
+            $product->colors = array_values(array_unique(array_column($data['variants'], 'color')));
+            $product->save();
+            foreach ($data['variants'] as $variant) {
+                $values = collect($variant)->except('id')->all();
+                if (! empty($variant['id'])) {
+                    $existing->get($variant['id'])->update($values);
+                } else {
+                    $product->variants()->create($values);
+                }
+            }
+            $product->variants()->whereIn('id', $removed)->delete();
+
+            return $product->load('variants');
+        }, 3);
+
+        // Disparar Webhook a n8n
+        $this->n8nWebhook->dispatch($id ? 'product.updated' : 'product.created', [
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'brand' => $product->brand,
+            'category' => $product->category,
+            'price' => $product->price,
+            'model_3d_url' => $product->model_3d_url,
+        ], $request->user()?->email);
+
+        return response()->json($product, $id ? 200 : 201);
+    }
+
+    public function destroyProduct(int $id)
+    {
+        // Preserve purchased products and their history; remove from the public catalog.
+        DB::transaction(function () use ($id) {
+            Product::whereKey($id)->lockForUpdate()->firstOrFail()->update(['active' => false]);
+        });
+
+        return response()->json(['message' => 'Producto desactivado.']);
+    }
+
+    public function orders()
+    {
+        return Order::with(['items', 'user:id,name,email'])->latest('id')->paginate(20);
+    }
+
+    public function updateOrder(Request $request, int $id)
+    {
+        $data = $request->validate(['status' => ['required', Rule::in(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'])]]);
+
+        return DB::transaction(function () use ($data, $id) {
+            $order = Order::whereKey($id)->lockForUpdate()->firstOrFail();
+            $transitions = ['pending' => ['confirmed', 'cancelled'], 'confirmed' => ['shipped', 'cancelled'], 'shipped' => ['delivered'], 'delivered' => [], 'cancelled' => []];
+            if ($data['status'] === $order->status) {
+                return $order->load('items');
+            }
+            if (! in_array($data['status'], $transitions[$order->status])) {
+                throw ValidationException::withMessages(['status' => 'El cambio de estado no está permitido.']);
+            }
+            if ($data['status'] === 'cancelled') {
+                $items = $order->items()->orderBy('product_variant_id')->get();
+                foreach ($items as $item) {
+                    if ($item->product_variant_id) {
+                        ProductVariant::whereKey($item->product_variant_id)->lockForUpdate()->first()?->increment('stock', $item->quantity);
+                    }
+                }
+            }
+            $order->update($data);
+
+            return $order->load('items');
+        }, 3);
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ]);
+
+        $path = $request->file('image')->store('products', 'public');
+
+        return response()->json([
+            'url' => asset('storage/' . $path),
+            'path' => $path,
+            'message' => 'Imagen subida correctamente.',
+        ], 201);
     }
 
     /**
@@ -167,32 +335,23 @@ class AdminController extends Controller
                         'responses' => ['201' => ['description' => 'Usuario insertado en tabla users y token emitido']],
                     ],
                 ],
-                '/auth/oauth' => [
+                '/orders' => [
+                    'get' => [
+                        'tags' => ['2. Pedidos y Compras'],
+                        'summary' => 'Historial de pedidos del cliente autenticado',
+                        'security' => [['bearerAuth' => []]],
+                        'responses' => ['200' => ['description' => 'Lista paginada de pedidos']],
+                    ],
                     'post' => [
-                        'tags' => ['1. Autenticación Sanctum (Semana 6)'],
-                        'summary' => 'Login con Proveedor de Identidad OAuth 2.0 (Google / GitHub - Semana 7)',
-                        'requestBody' => [
-                            'required' => true,
-                            'content' => [
-                                'application/json' => [
-                                    'schema' => [
-                                        'type' => 'object',
-                                        'required' => ['provider'],
-                                        'properties' => [
-                                            'provider' => ['type' => 'string', 'enum' => ['google', 'github'], 'example' => 'google'],
-                                            'email' => ['type' => 'string', 'example' => 'alumno.utn@gmail.com'],
-                                            'name' => ['type' => 'string', 'example' => 'Alumno UTN Google'],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                        'responses' => ['200' => ['description' => 'Autenticación OAuth 2.0 exitosa']],
+                        'tags' => ['2. Pedidos y Compras'],
+                        'summary' => 'Crear nueva orden de compra (checkout)',
+                        'security' => [['bearerAuth' => []]],
+                        'responses' => ['201' => ['description' => 'Orden creada']],
                     ],
                 ],
                 '/products' => [
                     'get' => [
-                        'tags' => ['2. Catálogo Público 3D (Semanas 2 a 4)'],
+                        'tags' => ['3. Catálogo Público 3D (Semanas 2 a 4)'],
                         'summary' => 'Listar zapatillas de la BD con filtros multicriterio y modelos 3D',
                         'parameters' => [
                             ['name' => 'category', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['Hombre', 'Mujer', 'Niño']]],
@@ -206,109 +365,34 @@ class AdminController extends Controller
                         'responses' => ['200' => ['description' => 'Lista paginada de productos']],
                     ],
                 ],
-                '/products/{id}' => [
-                    'get' => [
-                        'tags' => ['2. Catálogo Público 3D (Semanas 2 a 4)'],
-                        'summary' => 'Consultar detalle de una zapatilla por ID o slug',
-                        'parameters' => [
-                            ['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string', 'example' => '1']],
-                        ],
-                        'responses' => ['200' => ['description' => 'Detalle del producto con sus variantes y modelos 3D']],
-                    ],
-                ],
                 '/admin/products' => [
-                    'post' => [
-                        'tags' => ['3. Administración CRUD en BD (Semanas 4, 5 y 7)'],
-                        'summary' => 'INSERTAR nueva zapatilla 3D en la Base de Datos (StoreProductRequest)',
+                    'get' => [
+                        'tags' => ['4. Administración (Semanas 4, 5 y 7)'],
+                        'summary' => 'Listar productos en administración',
                         'security' => [['bearerAuth' => []]],
-                        'requestBody' => [
-                            'required' => true,
-                            'content' => [
-                                'application/json' => [
-                                    'schema' => [
-                                        'type' => 'object',
-                                        'required' => ['name', 'brand', 'category', 'price', 'description'],
-                                        'properties' => [
-                                            'name' => ['type' => 'string', 'example' => 'Nike Air Force 1 Low Mocha Especial'],
-                                            'brand' => ['type' => 'string', 'example' => 'Nike'],
-                                            'category' => ['type' => 'string', 'enum' => ['Hombre', 'Mujer', 'Niño'], 'example' => 'Hombre'],
-                                            'price' => ['type' => 'number', 'example' => 165.00],
-                                            'original_price' => ['type' => 'number', 'example' => 190.00],
-                                            'model_3d_url' => ['type' => 'string', 'example' => '/models/af1-mocha.glb'],
-                                            'description' => ['type' => 'string', 'example' => 'Zapatilla urbana creada desde el endpoint POST de la API RESTful.'],
-                                            'featured' => ['type' => 'boolean', 'example' => true],
-                                            'active' => ['type' => 'boolean', 'example' => true],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                        'responses' => [
-                            '201' => ['description' => 'Producto creado en la BD con sus variantes de talle y stock'],
-                            '422' => ['description' => 'Error de validación FormRequest (Semana 5)'],
-                        ],
+                        'responses' => ['200' => ['description' => 'Productos admin']],
+                    ],
+                    'post' => [
+                        'tags' => ['4. Administración (Semanas 4, 5 y 7)'],
+                        'summary' => 'Insertar nueva zapatilla en administración',
+                        'security' => [['bearerAuth' => []]],
+                        'responses' => ['201' => ['description' => 'Producto creado']],
                     ],
                 ],
-                '/admin/products/{id}' => [
-                    'put' => [
-                        'tags' => ['3. Administración CRUD en BD (Semanas 4, 5 y 7)'],
-                        'summary' => 'ACTUALIZAR zapatilla existente en la Base de Datos (UpdateProductRequest)',
+                '/admin/orders' => [
+                    'get' => [
+                        'tags' => ['4. Administración (Semanas 4, 5 y 7)'],
+                        'summary' => 'Listar todas las órdenes de la tienda para administración',
                         'security' => [['bearerAuth' => []]],
-                        'parameters' => [
-                            ['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer', 'example' => 1]],
-                        ],
-                        'requestBody' => [
-                            'required' => true,
-                            'content' => [
-                                'application/json' => [
-                                    'schema' => [
-                                        'type' => 'object',
-                                        'properties' => [
-                                            'name' => ['type' => 'string', 'example' => 'Air Jordan 1 High OG "Chicago" (Edición Limitada)'],
-                                            'price' => ['type' => 'number', 'example' => 199.99],
-                                            'category' => ['type' => 'string', 'enum' => ['Hombre', 'Mujer', 'Niño'], 'example' => 'Hombre'],
-                                            'model_3d_url' => ['type' => 'string', 'example' => '/models/jordan-chicago.glb'],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                        'responses' => ['200' => ['description' => 'Producto actualizado en la BD']],
-                    ],
-                    'delete' => [
-                        'tags' => ['3. Administración CRUD en BD (Semanas 4, 5 y 7)'],
-                        'summary' => 'ELIMINAR zapatilla de la Base de Datos',
-                        'security' => [['bearerAuth' => []]],
-                        'parameters' => [
-                            ['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer', 'example' => 12]],
-                        ],
-                        'responses' => ['200' => ['description' => 'Producto eliminado de la BD']],
+                        'responses' => ['200' => ['description' => 'Lista de órdenes']],
                     ],
                 ],
                 '/admin/webhooks/n8n' => [
                     'post' => [
-                        'tags' => ['4. Automatización n8n y Emails (Semana 15)'],
+                        'tags' => ['5. Automatización n8n y Emails (Semana 15)'],
                         'summary' => 'Disparar evento Webhook HTTP POST a n8n para envío de Email',
                         'security' => [['bearerAuth' => []]],
-                        'requestBody' => [
-                            'required' => true,
-                            'content' => [
-                                'application/json' => [
-                                    'schema' => [
-                                        'type' => 'object',
-                                        'properties' => [
-                                            'event' => [
-                                                'type' => 'string',
-                                                'enum' => ['user.registered', 'product.created', 'stock.low', 'catalog.3d.synced'],
-                                                'example' => 'user.registered',
-                                            ],
-                                            'notify_email' => ['type' => 'string', 'example' => 'profesor@utn.edu.ar'],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                        'responses' => ['200' => ['description' => 'Webhook procesado y plantilla de email generada']],
+                        'responses' => ['200' => ['description' => 'Webhook procesado']],
                     ],
                 ],
             ],
