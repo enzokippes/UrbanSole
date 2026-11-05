@@ -1,0 +1,170 @@
+{
+  "name": "UrbanSole 3D - Automatización de Eventos y Emails (Programación IV - UTN)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "urbansole",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e1b8b8e0-1111-4a2b-9c3d-000000000001",
+      "name": "Webhook UrbanSole (Laravel 11)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "urbansole-laravel-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-event-check",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "stock.low",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e1b8b8e0-1111-4a2b-9c3d-000000000002",
+      "name": "¿Es Alerta de Stock Crítico?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/api/products",
+        "options": {}
+      },
+      "id": "e1b8b8e0-1111-4a2b-9c3d-000000000003",
+      "name": "Consultar API REST Catálogo Laravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "notificaciones@urbansole.com",
+        "toEmail": "={{ $('Webhook UrbanSole (Laravel 11)').item.json.body.email_notification.to || 'admin@urbansole.com' }}",
+        "subject": "={{ $('Webhook UrbanSole (Laravel 11)').item.json.body.email_notification.subject || 'Notificación UrbanSole 3D' }}",
+        "emailFormat": "html",
+        "html": "={{ $('Webhook UrbanSole (Laravel 11)').item.json.body.email_notification.html }}",
+        "options": {}
+      },
+      "id": "e1b8b8e0-1111-4a2b-9c3d-000000000004",
+      "name": "Enviar Email de Notificación (SMTP / Gmail)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"received\": true,\n  \"workflow\": \"UrbanSole 3D - Automatización de Eventos y Emails\",\n  \"processed_event\": \"{{ $('Webhook UrbanSole (Laravel 11)').item.json.body.event }}\",\n  \"email_sent_to\": \"{{ $('Webhook UrbanSole (Laravel 11)').item.json.body.email_notification.to }}\",\n  \"email_subject\": \"{{ $('Webhook UrbanSole (Laravel 11)').item.json.body.email_notification.subject }}\",\n  \"processed_at\": \"{{ $now.toISO() }}\"\n}",
+        "options": {}
+      },
+      "id": "e1b8b8e0-1111-4a2b-9c3d-000000000005",
+      "name": "Responder a Laravel (Respond to Webhook)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook UrbanSole (Laravel 11)": {
+      "main": [
+        [
+          {
+            "node": "¿Es Alerta de Stock Crítico?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Alerta de Stock Crítico?": {
+      "main": [
+        [
+          {
+            "node": "Consultar API REST Catálogo Laravel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Email de Notificación (SMTP / Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar API REST Catálogo Laravel": {
+      "main": [
+        [
+          {
+            "node": "Enviar Email de Notificación (SMTP / Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Email de Notificación (SMTP / Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Responder a Laravel (Respond to Webhook)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "Programación IV - UTN Concordia"
+    },
+    {
+      "name": "Laravel + Angular + n8n"
+    }
+  ]
+}
