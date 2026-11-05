@@ -28,6 +28,12 @@ export class AuthService {
     );
   }
 
+  socialLogin(provider: 'google' | 'github'): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/oauth`, { provider }).pipe(
+      tap(res => this.handleAuthSuccess(res))
+    );
+  }
+
   logout(): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/logout`, {}).pipe(
       tap({

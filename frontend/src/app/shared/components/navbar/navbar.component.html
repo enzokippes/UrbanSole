@@ -1,7 +1,7 @@
 <nav class="navbar nav-blur">
   <div class="nav-container">
     <!-- Brand Logo -->
-    <a routerLink="/catalog" class="brand-logo">
+    <a routerLink="/" class="brand-logo">
       <div class="logo-box">
         <span>US</span>
       </div>
@@ -10,11 +10,17 @@
 
     <!-- Desktop Navigation Links -->
     <div class="desktop-nav">
-      <a *ngFor="let cat of categories" 
-         [routerLink]="['/catalog']" 
-         [queryParams]="{ category: cat.query }" 
+      <a routerLink="/catalog" [queryParams]="{}" class="nav-link">
+        Catálogo 3D
+      </a>
+      <a *ngFor="let cat of categories"
+         [routerLink]="['/catalog']"
+         [queryParams]="{ category: cat.query }"
          class="nav-link">
         {{ cat.label }}
+      </a>
+      <a *ngIf="authService.isAdmin()" routerLink="/admin" class="nav-link">
+        Admin
       </a>
     </div>
 
@@ -24,11 +30,11 @@
         <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
-        <input 
-          type="text" 
-          name="searchQuery" 
-          [(ngModel)]="searchQuery" 
-          placeholder="Buscar zapatillas, marcas..." 
+        <input
+          type="text"
+          name="searchQuery"
+          [(ngModel)]="searchQuery"
+          placeholder="Buscar zapatillas, marcas..."
           class="search-input"
           autocomplete="off"
         />
@@ -52,6 +58,9 @@
             <p class="dropdown-email">{{ authService.currentUser()?.email }}</p>
             <span *ngIf="authService.isAdmin()" class="role-badge">Admin</span>
           </div>
+          <a *ngIf="authService.isAdmin()" routerLink="/admin" (click)="userMenuOpen.set(false)" class="dropdown-item" style="display:block;text-decoration:none;color:#fff;">
+            Panel de Administración
+          </a>
           <button (click)="logout()" class="dropdown-item logout-btn">
             Cerrar Sesión
           </button>
@@ -59,7 +68,7 @@
       </div>
 
       <ng-template #loginBtn>
-        <a routerLink="/auth" class="login-link">
+        <a routerLink="/login" class="login-link">
           Ingresar
         </a>
       </ng-template>
@@ -87,12 +96,18 @@
   <!-- Mobile Dropdown -->
   <div *ngIf="mobileMenuOpen()" class="mobile-menu">
     <div class="mobile-categories">
-      <a *ngFor="let cat of categories" 
-         [routerLink]="['/catalog']" 
-         [queryParams]="{ category: cat.query }" 
+      <a routerLink="/catalog" (click)="mobileMenuOpen.set(false)" class="mobile-link">
+        Catálogo 3D Completo
+      </a>
+      <a *ngFor="let cat of categories"
+         [routerLink]="['/catalog']"
+         [queryParams]="{ category: cat.query }"
          (click)="mobileMenuOpen.set(false)"
          class="mobile-link">
         {{ cat.label }}
+      </a>
+      <a *ngIf="authService.isAdmin()" routerLink="/admin" (click)="mobileMenuOpen.set(false)" class="mobile-link">
+        Panel Admin
       </a>
     </div>
   </div>

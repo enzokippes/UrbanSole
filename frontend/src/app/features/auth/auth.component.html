@@ -9,16 +9,16 @@
 
     <!-- Tab Switcher -->
     <div class="auth-tabs">
-      <button 
-        (click)="toggleMode(true)" 
-        class="tab-btn" 
+      <button
+        (click)="toggleMode(true)"
+        class="tab-btn"
         [class.active]="isLoginMode()"
       >
         Ingresar
       </button>
-      <button 
-        (click)="toggleMode(false)" 
-        class="tab-btn" 
+      <button
+        (click)="toggleMode(false)"
+        class="tab-btn"
         [class.active]="!isLoginMode()"
       >
         Registrarse
@@ -34,11 +34,11 @@
     <form *ngIf="isLoginMode()" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form">
       <div class="form-group">
         <label for="login-email" class="form-label">Correo Electrónico</label>
-        <input 
-          id="login-email" 
-          type="email" 
-          formControlName="email" 
-          placeholder="tu@email.com" 
+        <input
+          id="login-email"
+          type="email"
+          formControlName="email"
+          placeholder="tu@email.com"
           class="form-input"
           [class.invalid]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
         />
@@ -50,11 +50,11 @@
       <div class="form-group">
         <label for="login-password" class="form-label">Contraseña</label>
         <div class="password-wrapper">
-          <input 
-            id="login-password" 
-            [type]="showPassword() ? 'text' : 'password'" 
-            formControlName="password" 
-            placeholder="••••••••" 
+          <input
+            id="login-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="••••••••"
             class="form-input"
             [class.invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
           />
@@ -77,11 +77,11 @@
     <form *ngIf="!isLoginMode()" [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
       <div class="form-group">
         <label for="reg-name" class="form-label">Nombre Completo</label>
-        <input 
-          id="reg-name" 
-          type="text" 
-          formControlName="name" 
-          placeholder="Juan Pérez" 
+        <input
+          id="reg-name"
+          type="text"
+          formControlName="name"
+          placeholder="Juan Pérez"
           class="form-input"
           [class.invalid]="registerForm.get('name')?.touched && registerForm.get('name')?.invalid"
         />
@@ -92,11 +92,11 @@
 
       <div class="form-group">
         <label for="reg-email" class="form-label">Correo Electrónico</label>
-        <input 
-          id="reg-email" 
-          type="email" 
-          formControlName="email" 
-          placeholder="tu@email.com" 
+        <input
+          id="reg-email"
+          type="email"
+          formControlName="email"
+          placeholder="tu@email.com"
           class="form-input"
           [class.invalid]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
         />
@@ -108,11 +108,11 @@
       <div class="form-group">
         <label for="reg-password" class="form-label">Contraseña (mínimo 8 caracteres)</label>
         <div class="password-wrapper">
-          <input 
-            id="reg-password" 
-            [type]="showPassword() ? 'text' : 'password'" 
-            formControlName="password" 
-            placeholder="••••••••" 
+          <input
+            id="reg-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="••••••••"
             class="form-input"
             [class.invalid]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
           />
@@ -127,11 +127,11 @@
 
       <div class="form-group">
         <label for="reg-confirm" class="form-label">Confirmar Contraseña</label>
-        <input 
-          id="reg-confirm" 
-          type="password" 
-          formControlName="password_confirmation" 
-          placeholder="••••••••" 
+        <input
+          id="reg-confirm"
+          type="password"
+          formControlName="password_confirmation"
+          placeholder="••••••••"
           class="form-input"
           [class.invalid]="registerForm.get('password_confirmation')?.touched && registerForm.get('password_confirmation')?.invalid"
         />
@@ -142,5 +142,32 @@
         <span *ngIf="loading()">Procesando...</span>
       </button>
     </form>
+
+    <!-- OAuth 2.0 External Identity Providers (Semana 7) -->
+    <div class="oauth-divider">
+      <span>O continuar con OAuth 2.0</span>
+    </div>
+
+    <div class="oauth-grid">
+      <button type="button" (click)="onSocialLogin('google')" [disabled]="loading()" class="oauth-btn">
+        <span>Google</span>
+      </button>
+      <button type="button" (click)="onSocialLogin('github')" [disabled]="loading()" class="oauth-btn">
+        <span>GitHub</span>
+      </button>
+    </div>
+
+    <!-- Quick Demo Credentials -->
+    <div class="demo-access-box">
+      <p class="demo-label">Cuentas de prueba rápidas (Sanctum):</p>
+      <div class="demo-btns">
+        <button type="button" (click)="fillDemoCredentials('admin')" class="demo-pill">
+          Entrar como Admin
+        </button>
+        <button type="button" (click)="fillDemoCredentials('customer')" class="demo-pill">
+          Entrar como Cliente
+        </button>
+      </div>
+    </div>
   </div>
 </div>

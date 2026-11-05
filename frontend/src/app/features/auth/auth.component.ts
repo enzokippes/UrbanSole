@@ -44,6 +44,30 @@ export class AuthComponent {
     this.showPassword.update(prev => !prev);
   }
 
+  fillDemoCredentials(role: 'admin' | 'customer'): void {
+    this.isLoginMode.set(true);
+    this.loginForm.patchValue({
+      email: role === 'admin' ? 'admin@urbansole.com' : 'demo@urbansole.com',
+      password: 'password'
+    });
+    this.onLogin();
+  }
+
+  onSocialLogin(provider: 'google' | 'github'): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.authService.socialLogin(provider).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.router.navigate(['/catalog']);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('Error al autenticar con el proveedor externo.');
+      }
+    });
+  }
+
   onLogin(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -54,9 +78,13 @@ export class AuthComponent {
     this.errorMessage.set(null);
 
     this.authService.login(this.loginForm.value).subscribe({
-      next: () => {
+      next: res => {
         this.loading.set(false);
-        this.router.navigate(['/catalog']);
+        if (res.user?.role === 'admin') {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/catalog']);
+        }
       },
       error: err => {
         this.loading.set(false);
