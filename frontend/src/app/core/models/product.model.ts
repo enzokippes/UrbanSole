@@ -16,6 +16,7 @@ export interface Product {
   original_price?: number | null;
   category: 'Hombre' | 'Mujer' | 'Niño';
   model_3d_url?: string | null;
+  color_models?: Record<string, string> | null;
   images?: string[];
   color_images?: Record<string, string>;
   colors?: string[];
@@ -42,6 +43,7 @@ export interface PaginatedProducts {
 export interface ProductFilters {
   search?: string;
   category?: string;
+  featured?: boolean;
   sizes?: string[];
   colors?: string[];
   min_price?: string | number;
@@ -49,4 +51,21 @@ export interface ProductFilters {
   sort?: string;
   page?: number;
   per_page?: number;
+  include_inactive?: boolean;
+}
+
+export interface Model3dOption {
+  url: string;
+  label: string;
+  category: 'Hombre' | 'Mujer' | 'Niño';
+}
+
+export interface AdminStats {
+  total_users: number;
+  total_products: number;
+  active_products: number;
+  models_3d_count: number;
+  total_stock: number;
+  by_category: Record<string, number>;
+  message: string;
 }

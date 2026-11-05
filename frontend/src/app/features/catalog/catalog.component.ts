@@ -40,9 +40,9 @@ export class CatalogComponent implements OnInit {
     per_page: 12
   };
 
-  // Filter options
+  // Filter options (Hombre, Mujer y Niño)
   readonly categories = ['Hombre', 'Mujer', 'Niño'];
-  readonly sizes = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
+  readonly sizes = ['28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
   readonly colors = ['Blanco', 'Negro', 'Rojo', 'Azul', 'Rosa', 'Beige', 'Verde', 'Gris'];
   readonly sortOptions = [
     { value: 'created_at:desc', label: 'Más recientes' },

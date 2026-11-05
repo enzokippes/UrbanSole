@@ -6,7 +6,11 @@
       <div class="hero-grid">
         <!-- Left: Headline & Actions -->
         <div class="hero-text-col">
-          <p class="hero-tag">Nueva Colección 2024</p>
+          <div class="hero-pill-badge">
+            <span class="live-dot"></span>
+            <span>NUEVA EXPERIENCIA 3D INTERACTIVA · HOMBRE · MUJER · NIÑO</span>
+          </div>
+
           <h1 class="hero-title">
             <span class="title-wear">WEAR</span><br />
             <span class="title-your">YOUR</span><br />
@@ -14,18 +18,18 @@
           </h1>
 
           <p class="hero-desc">
-            Las zapatillas que definen quién sos. Explorá cada par con modelos interactivos y detalles de alta calidad.
+            Explorá cada zapatilla en <strong>3D 360° tiempo real</strong> con texturas y colores fieles a cada modelo. Colecciones completas para <strong>Hombre, Mujer y Niño</strong>.
           </p>
 
           <div class="hero-actions">
             <a routerLink="/catalog" class="btn-primary hero-btn-primary">
-              Ver Catálogo
+              Explorar Catálogo 3D
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-arrow">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
               </svg>
             </a>
-            <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Hombre' }" class="btn-secondary hero-btn-secondary">
-              Destacados
+            <a [routerLink]="['/product', currentHeroItem().id]" [queryParams]="{ view: '3d' }" class="btn-secondary hero-btn-secondary">
+              Ver {{ currentHeroItem().name.split(' "')[0] }} en 3D
             </a>
           </div>
 
@@ -38,20 +42,71 @@
           </div>
         </div>
 
-        <!-- Right: Showcase Image & Floating Badges -->
+        <!-- Right: Interactive 3D Sneaker Showcase -->
         <div class="hero-visual-col">
-          <div class="visual-wrapper">
-            <div class="glow-ring"></div>
-            <img src="/images/jordan-chicago.jpg" alt="Air Jordan 1 Chicago" class="hero-shoe-img" />
-            
-            <div class="badge-float badge-top-right">
-              <p class="badge-name">Air Jordan 1 High</p>
-              <p class="badge-price">Desde $180</p>
+          <div class="showcase-card">
+            <!-- Top bar: Category 3D Selector + 3D/Photo Switch -->
+            <div class="showcase-top-bar">
+              <div class="hero-cat-pills">
+                <button
+                  *ngFor="let item of heroShowcase; let idx = index"
+                  type="button"
+                  (click)="selectHeroItem(idx)"
+                  class="hero-cat-pill"
+                  [class.active]="activeHeroIndex() === idx"
+                >
+                  {{ item.category }}
+                </button>
+              </div>
+
+              <div class="hero-mode-toggle">
+                <button
+                  type="button"
+                  (click)="heroViewMode.set('3d')"
+                  class="mini-mode-btn"
+                  [class.active]="heroViewMode() === '3d'"
+                >
+                  3D 360°
+                </button>
+                <button
+                  type="button"
+                  (click)="heroViewMode.set('image')"
+                  class="mini-mode-btn"
+                  [class.active]="heroViewMode() === 'image'"
+                >
+                  Foto
+                </button>
+              </div>
             </div>
-            
-            <div class="badge-float badge-bottom-left">
-              <p class="badge-subtitle">Diseño Urbano</p>
-              <p class="badge-title">Iconic Heritage</p>
+
+            <!-- 3D Viewer or Image -->
+            <div class="hero-stage-box">
+              <app-model-viewer-3d
+                *ngIf="heroViewMode() === '3d'"
+                [src]="currentHeroItem().model3d"
+                [alt]="currentHeroItem().name"
+                [poster]="currentHeroItem().image"
+                minHeight="410px"
+              ></app-model-viewer-3d>
+
+              <div *ngIf="heroViewMode() === 'image'" class="hero-photo-stage">
+                <img [src]="currentHeroItem().image" [alt]="currentHeroItem().name" class="hero-stage-img" />
+              </div>
+            </div>
+
+            <!-- Bottom Info Bar of current 3D model -->
+            <div class="showcase-bottom-bar">
+              <div>
+                <span class="showcase-cat-tag">{{ currentHeroItem().category }} · Modelo 3D Fiel</span>
+                <h3 class="showcase-shoe-name">{{ currentHeroItem().name }}</h3>
+                <p class="showcase-shoe-sub">{{ currentHeroItem().subtitle }}</p>
+              </div>
+              <div class="showcase-right-cta">
+                <span class="showcase-price">${{ currentHeroItem().price }}</span>
+                <a [routerLink]="['/product', currentHeroItem().id]" [queryParams]="{ view: '3d' }" class="showcase-open-btn">
+                  Ver Detalle →
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -59,39 +114,60 @@
     </div>
   </section>
 
-  <!-- ─── CATEGORIES SECTION ───────────────────────────── -->
+  <!-- ─── CATEGORIES SECTION (HOMBRE, MUJER, NIÑO) ─────── -->
   <section class="container py-16">
+    <div class="section-header">
+      <div>
+        <p class="section-tag">Colecciones Completas</p>
+        <h2 class="section-title">Hombre, Mujer y Niño</h2>
+      </div>
+    </div>
+
     <div class="categories-grid">
-      <a *ngFor="let cat of categories" 
-         [routerLink]="['/catalog']" 
+      <a *ngFor="let cat of categories"
+         [routerLink]="['/catalog']"
          [queryParams]="{ category: cat.query }"
          class="category-card"
       >
-        <span class="cat-count">{{ cat.count }}</span>
-        <h2 class="cat-title">{{ cat.label }}</h2>
-        <p class="cat-desc">{{ cat.desc }}</p>
-        <div class="cat-arrow">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-          </svg>
+        <div class="cat-img-bg">
+          <img [src]="cat.image" [alt]="cat.label" class="cat-bg-photo" loading="lazy" />
+          <div class="cat-bg-overlay"></div>
+        </div>
+        <div class="cat-content">
+          <span class="cat-count">{{ cat.count }}</span>
+          <h2 class="cat-title">{{ cat.label }}</h2>
+          <p class="cat-desc">{{ cat.desc }}</p>
+          <div class="cat-cta-row">
+            <span>Explorar colección {{ cat.label }}</span>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="cat-arrow-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </div>
         </div>
       </a>
     </div>
   </section>
 
-  <!-- ─── FEATURED PRODUCTS ────────────────────────────── -->
+  <!-- ─── CATALOG SHOWCASE WITH CATEGORY TABS ───────────── -->
   <section class="container py-16">
     <div class="section-header">
       <div>
-        <p class="section-tag">Selección especial</p>
-        <h2 class="section-title">Destacados</h2>
+        <p class="section-tag">Modelos con Visor 3D 360° Fiel al Nombre</p>
+        <h2 class="section-title">Catálogo Destacado en 3D</h2>
       </div>
-      <a routerLink="/catalog" class="view-all-link">
-        Ver todos
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="arrow-small">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-        </svg>
-      </a>
+
+      <!-- Category Filter Tabs on Home -->
+      <div class="home-filter-tabs">
+        <button
+          *ngFor="let tab of ['Todos', 'Hombre', 'Mujer', 'Niño']"
+          type="button"
+          (click)="setCategoryTab(tab)"
+          class="home-tab-btn"
+          [class.active]="selectedCategoryTab() === tab"
+        >
+          {{ tab }}
+        </button>
+      </div>
     </div>
 
     <!-- Loading Skeletons -->
@@ -105,15 +181,15 @@
 
     <!-- Products Grid -->
     <div *ngIf="!loading()" class="products-grid">
-      <app-product-card 
-        *ngFor="let product of featuredProducts()" 
+      <app-product-card
+        *ngFor="let product of filteredProducts()"
         [product]="product"
       ></app-product-card>
     </div>
 
     <div class="catalog-cta-wrap">
-      <a routerLink="/catalog" class="btn-secondary px-8 py-3">
-        Explorar catálogo completo
+      <a routerLink="/catalog" class="btn-primary px-8 py-3">
+        Ir al Catálogo con Filtros Avanzados →
       </a>
     </div>
   </section>
@@ -121,14 +197,14 @@
   <!-- ─── BRAND STRIP ──────────────────────────────────── -->
   <section class="brand-strip">
     <div class="container">
-      <p class="strip-label">Líneas y Colecciones UrbanSole</p>
+      <p class="strip-label">Siluetas 3D Disponibles en UrbanSole</p>
       <div class="brands-row">
-        <span>Air Force 1</span>
-        <span>Air Jordan</span>
-        <span>Air Max</span>
-        <span>Dunk Low</span>
-        <span>Retro Runner</span>
-        <span>Precision</span>
+        <span>Air Jordan 1 High OG</span>
+        <span>Air Force 1 Low & Shadow</span>
+        <span>Air Max 90 & Air Max 1</span>
+        <span>New Balance 247</span>
+        <span>Vans Old Skool</span>
+        <span>Adidas Deerupt</span>
       </div>
     </div>
   </section>
@@ -141,12 +217,14 @@
         <span class="brand-title">URBAN<span class="brand-accent">SOLE</span></span>
       </div>
       <p class="footer-copy">
-        UrbanSole &copy; 2026. E-Commerce oficial para Programación IV (UTN Concordia).
+        UrbanSole &copy; 2026. E-Commerce 3D para Programación IV (UTN Facultad Regional Concordia).
       </p>
       <div class="footer-links">
         <a routerLink="/catalog">Catálogo</a>
         <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Hombre' }">Hombre</a>
         <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Mujer' }">Mujer</a>
+        <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Niño' }">Niño</a>
+        <a href="http://localhost:8000/api/docs" target="_blank" rel="noopener">Swagger API</a>
       </div>
     </div>
   </footer>

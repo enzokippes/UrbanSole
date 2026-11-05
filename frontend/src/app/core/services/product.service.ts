@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PaginatedProducts, Product, ProductFilters } from '../models/product.model';
+import { AdminStats, Model3dOption, PaginatedProducts, Product, ProductFilters } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +18,12 @@ export class ProductService {
     }
     if (filters.category) {
       params = params.set('category', filters.category);
+    }
+    if (filters.featured) {
+      params = params.set('featured', '1');
+    }
+    if (filters.include_inactive) {
+      params = params.set('include_inactive', '1');
     }
     if (filters.sizes && filters.sizes.length > 0) {
       params = params.set('size', filters.sizes.join(','));
@@ -50,7 +56,36 @@ export class ProductService {
     return this.http.get<Product>(`${this.apiUrl}/products/${idOrSlug}`);
   }
 
-  getCategories(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/categories`);
+  getCategories(): Observable<{ categories: string[] }> {
+    return this.http.get<{ categories: string[] }>(`${this.apiUrl}/categories`);
+  }
+
+  getModels3d(): Observable<{ models: Model3dOption[] }> {
+    return this.http.get<{ models: Model3dOption[] }>(`${this.apiUrl}/models-3d`);
+  }
+
+  // Semana 12: Operaciones CRUD completas (POST, PUT, DELETE)
+  createProduct(data: Partial<Product>): Observable<{ message: string; data: Product }> {
+    return this.http.post<{ message: string; data: Product }>(`${this.apiUrl}/admin/products`, data);
+  }
+
+  updateProduct(id: number, data: Partial<Product>): Observable<{ message: string; data: Product }> {
+    return this.http.put<{ message: string; data: Product }>(`${this.apiUrl}/admin/products/${id}`, data);
+  }
+
+  deleteProduct(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/admin/products/${id}`);
+  }
+
+  getAdminStats(): Observable<AdminStats> {
+    return this.http.get<AdminStats>(`${this.apiUrl}/admin/stats`);
+  }
+
+  triggerN8nWebhook(event: string, notifyEmail?: string, data?: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin/webhooks/n8n`, {
+      event,
+      notify_email: notifyEmail,
+      data
+    });
   }
 }

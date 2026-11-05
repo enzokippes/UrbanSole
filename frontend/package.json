@@ -2,11 +2,11 @@
   "name": "frontend",
   "version": "0.0.0",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "ng": "node run-ng.mjs",
+    "start": "node run-ng.mjs serve",
+    "build": "node run-ng.mjs build",
+    "watch": "node run-ng.mjs build --watch --configuration development",
+    "test": "node run-ng.mjs test"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -18,7 +18,8 @@
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "zone.js": "^0.16.1"
   },
   "devDependencies": {
     "@angular/build": "^22.1.8",

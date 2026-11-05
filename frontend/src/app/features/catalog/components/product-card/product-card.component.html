@@ -1,14 +1,60 @@
 <div class="product-card group">
   <a [routerLink]="['/product', product.id]" class="image-wrapper">
     <img [src]="primaryImage" [alt]="product.name" class="product-img" loading="lazy" />
-    <span *ngIf="product.category" class="category-badge">{{ product.category }}</span>
+
+    <!-- Top Left Badges -->
+    <div class="badges-left">
+      <span *ngIf="product.category" class="category-badge">{{ product.category }}</span>
+      <span *ngIf="discountPercent" class="discount-badge">-{{ discountPercent }}%</span>
+    </div>
+
+    <!-- Top Right 3D Badge -->
+    <a
+      *ngIf="product.model_3d_url"
+      [routerLink]="['/product', product.id]"
+      [queryParams]="{ view: '3d' }"
+      (click)="$event.stopPropagation()"
+      class="badge-3d"
+      title="Abrir visor 3D interactivo 360°"
+    >
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="cube-icon">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      <span>3D 360°</span>
+    </a>
+
+    <!-- Hover Action Overlay -->
+    <div class="hover-3d-bar" *ngIf="product.model_3d_url">
+      <span>Explorar modelo 3D y talles →</span>
+    </div>
   </a>
 
   <div class="card-info">
-    <span class="brand-text">{{ product.brand }}</span>
+    <div class="brand-row">
+      <span class="brand-text">{{ product.brand }}</span>
+      <span *ngIf="product.colors && product.colors.length > 1" class="colors-count">
+        {{ product.colors.length }} colores
+      </span>
+    </div>
+
     <a [routerLink]="['/product', product.id]" class="title-link">
       <h3 class="product-title" [title]="product.name">{{ product.name }}</h3>
     </a>
+
+    <!-- Colorway quick switcher pills -->
+    <div *ngIf="product.colors && product.colors.length > 0" class="colorways-row">
+      <button
+        *ngFor="let col of product.colors"
+        type="button"
+        (click)="selectPreviewColor(col, $event)"
+        class="colorway-chip"
+        [class.active]="previewColor() === col"
+        [title]="col"
+      >
+        {{ col.split(' (')[0] }}
+      </button>
+    </div>
 
     <!-- Available sizes preview -->
     <div *ngIf="product.available_sizes && product.available_sizes.length > 0" class="sizes-row">
@@ -25,11 +71,24 @@
         <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
         <span *ngIf="product.original_price" class="old-price">${{ product.original_price | number:'1.2-2' }}</span>
       </div>
-      <button (click)="quickAdd()" class="add-btn" title="Agregar al carrito">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="add-icon">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-      </button>
+
+      <div class="card-actions">
+        <a
+          *ngIf="product.model_3d_url"
+          [routerLink]="['/product', product.id]"
+          [queryParams]="{ view: '3d' }"
+          class="view-3d-btn"
+          title="Ver zapatilla en 3D"
+        >
+          3D
+        </a>
+        <button (click)="quickAdd()" class="add-btn" [class.added]="addedFeedback()" title="Agregar al carrito">
+          <svg *ngIf="!addedFeedback()" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="add-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span *ngIf="addedFeedback()" class="check-mark">✓</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

@@ -1,12 +1,22 @@
 <div class="product-detail-page">
   <div class="container py-10">
-    <!-- Back to Catalog Link -->
-    <a routerLink="/catalog" class="back-link">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="back-arrow">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-      Volver al catálogo
-    </a>
+    <!-- Breadcrumb & Back Link -->
+    <div class="breadcrumb-bar">
+      <a routerLink="/catalog" class="back-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="back-arrow">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Volver al catálogo
+      </a>
+
+      <div *ngIf="product()" class="breadcrumb-trail">
+        <a routerLink="/">Inicio</a>
+        <span>/</span>
+        <a [routerLink]="['/catalog']" [queryParams]="{ category: product()?.category }">{{ product()?.category }}</a>
+        <span>/</span>
+        <span class="current-crumb">{{ product()?.name }}</span>
+      </div>
+    </div>
 
     <!-- Loading State -->
     <div *ngIf="loading()" class="detail-loading">
@@ -28,18 +38,88 @@
 
     <!-- Product Content -->
     <div *ngIf="!loading() && product()" class="detail-grid">
-      <!-- Left: Image Gallery -->
+      <!-- Left: 3D Viewer & Image Gallery -->
       <div class="gallery-col">
-        <div class="main-image-wrap">
-          <img [src]="activeImage() || product()?.images?.[0] || '/images/jordan-chicago.jpg'" [alt]="product()?.name" class="main-img" />
-          <span *ngIf="product()?.category" class="cat-floating-badge">{{ product()?.category }}</span>
+        <!-- Mode Switcher Bar: 3D vs Photo -->
+        <div class="viewer-mode-bar">
+          <div class="mode-tabs">
+            <button
+              *ngIf="product()?.model_3d_url"
+              type="button"
+              class="mode-tab-btn"
+              [class.active]="viewMode() === '3d'"
+              (click)="toggleViewMode('3d')"
+              id="btn-mode-3d"
+            >
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="tab-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+              <span>Modelo 3D Interactivo (360°)</span>
+            </button>
+
+            <button
+              type="button"
+              class="mode-tab-btn"
+              [class.active]="viewMode() === 'image'"
+              (click)="toggleViewMode('image')"
+              id="btn-mode-image"
+            >
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="tab-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span>Fotos HD</span>
+            </button>
+          </div>
+
+          <span class="active-color-pill" *ngIf="selectedColor()">
+            Color activo: <strong>{{ selectedColor().split(' (')[0] }}</strong>
+          </span>
         </div>
 
-        <!-- Thumbnails -->
+        <!-- Main Stage: either 3D Viewer or HD Image -->
+        <div class="main-stage-wrap">
+          <ng-container *ngIf="viewMode() === '3d' && activeModel3d(); else photoStageTpl">
+            <app-model-viewer-3d
+              [src]="activeModel3d()"
+              [alt]="product()?.name || 'Sneaker 3D'"
+              [poster]="activeImage()"
+              minHeight="480px"
+            ></app-model-viewer-3d>
+          </ng-container>
+
+          <ng-template #photoStageTpl>
+            <div class="main-image-wrap">
+              <img
+                [src]="activeImage() || product()?.images?.[0] || '/images/jordan-chicago.jpg'"
+                [alt]="product()?.name"
+                class="main-img"
+              />
+              <span *ngIf="product()?.category" class="cat-floating-badge">{{ product()?.category }}</span>
+
+              <!-- Quick button inside photo view to jump back to 3D -->
+              <button
+                *ngIf="product()?.model_3d_url"
+                type="button"
+                (click)="toggleViewMode('3d')"
+                class="floating-3d-trigger"
+              >
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="tab-icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                Ver esta zapatilla en 3D
+              </button>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Thumbnails & Colorway Gallery -->
         <div *ngIf="product()?.images && (product()?.images)!.length > 1" class="thumbnails-row">
-          <button 
-            *ngFor="let img of product()?.images" 
-            (click)="setImage(img)" 
+          <button
+            *ngFor="let img of product()?.images"
+            (click)="setImage(img)"
             class="thumb-btn"
             [class.active]="activeImage() === img"
           >
@@ -51,40 +131,71 @@
       <!-- Right: Info, Selectors & Buy Action -->
       <div class="info-col">
         <div class="info-header">
-          <span class="product-brand">{{ product()?.brand }}</span>
+          <div class="meta-badges-row">
+            <span class="product-brand">{{ product()?.brand }}</span>
+            <span class="dot-sep">·</span>
+            <span class="category-tag-inline">Colección {{ product()?.category }}</span>
+            <span *ngIf="product()?.model_3d_url" class="model-faithful-badge">
+              ✓ Modelo 3D Fiel al Calzado
+            </span>
+          </div>
+
           <h1 class="product-title">{{ product()?.name }}</h1>
-          
+
           <div class="price-row">
             <span class="price-val">${{ product()?.price | number:'1.2-2' }}</span>
             <span *ngIf="product()?.original_price" class="old-price-val">
               ${{ product()?.original_price | number:'1.2-2' }}
+            </span>
+            <span *ngIf="discountPercent()" class="save-badge">
+              Ahorrás {{ discountPercent() }}%
             </span>
           </div>
         </div>
 
         <p class="product-description">{{ product()?.description }}</p>
 
-        <!-- Color Selector -->
+        <!-- Color Selector (Synchronizes both Photo & 3D Model!) -->
         <div *ngIf="product()?.colors && (product()?.colors)!.length > 0" class="selection-group">
-          <h3 class="selection-title">Color: <span class="selected-text">{{ selectedColor() }}</span></h3>
+          <div class="selection-header-row">
+            <h3 class="selection-title">
+              Combinación de Color: <span class="selected-text">{{ selectedColor() }}</span>
+            </h3>
+            <span class="sync-3d-hint">Sincroniza foto y modelo 3D</span>
+          </div>
           <div class="color-options">
-            <button 
-              *ngFor="let col of product()?.colors" 
+            <button
+              *ngFor="let col of product()?.colors"
               (click)="selectColor(col)"
               class="color-btn"
               [class.active]="selectedColor() === col"
             >
-              {{ col }}
+              <img
+                *ngIf="product()?.color_images?.[col]"
+                [src]="product()?.color_images?.[col]"
+                alt=""
+                class="color-btn-thumb"
+              />
+              <span>{{ col }}</span>
             </button>
           </div>
         </div>
 
         <!-- Size Selector -->
         <div *ngIf="product()?.available_sizes && (product()?.available_sizes)!.length > 0" class="selection-group">
-          <h3 class="selection-title">Talle (EU): <span class="selected-text">{{ selectedSize() }}</span></h3>
+          <div class="selection-header-row">
+            <h3 class="selection-title">
+              Talle ({{ product()?.category === 'Niño' ? 'EU Niño' : 'EU Adulto' }}):
+              <span class="selected-text">{{ selectedSize() }}</span>
+            </h3>
+            <button type="button" (click)="sizeGuideOpen.set(true)" class="size-guide-btn">
+              Guía de talles ({{ product()?.category }})
+            </button>
+          </div>
+
           <div class="size-options">
-            <button 
-              *ngFor="let sz of product()?.available_sizes" 
+            <button
+              *ngFor="let sz of product()?.available_sizes"
               (click)="selectSize(sz)"
               class="size-btn"
               [class.active]="selectedSize() === sz"
@@ -92,17 +203,54 @@
               {{ sz }}
             </button>
           </div>
+
+          <div *ngIf="selectedVariantStock() !== null" class="stock-status">
+            <span class="stock-dot" [class.low]="(selectedVariantStock() || 0) <= 5"></span>
+            <span>
+              {{ selectedVariantStock() }} pares disponibles en stock para entrega inmediata
+            </span>
+          </div>
         </div>
 
-        <!-- Add to Cart CTA -->
+        <!-- Add to Cart & 3D Toggle CTAs -->
         <div class="actions-wrapper">
-          <button (click)="addToCart()" class="btn-primary buy-btn">
+          <button (click)="addToCart()" class="btn-primary buy-btn" [class.success]="addedSuccess()">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="cart-icon">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            <span *ngIf="!addedSuccess()">Agregar al Carrito</span>
-            <span *ngIf="addedSuccess()">¡Agregado con éxito! ✓</span>
+            <span *ngIf="!addedSuccess()">Agregar al Carrito — ${{ product()?.price | number:'1.2-2' }}</span>
+            <span *ngIf="addedSuccess()">¡Agregado al carrito con éxito! ✓</span>
           </button>
+
+          <button
+            *ngIf="product()?.model_3d_url"
+            type="button"
+            (click)="toggleViewMode(viewMode() === '3d' ? 'image' : '3d')"
+            class="btn-secondary toggle-3d-cta"
+          >
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="cart-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>{{ viewMode() === '3d' ? 'Cambiar a Galería de Fotos' : 'Inspeccionar Zapatilla en 3D (360°)' }}</span>
+          </button>
+        </div>
+
+        <!-- Feature Highlights -->
+        <div class="trust-perks">
+          <div class="perk-item">
+            <span class="perk-title">Modelo 3D Fiel</span>
+            <span class="perk-sub">Texturas y colores reales</span>
+          </div>
+          <div class="perk-item">
+            <span class="perk-title">Envío Gratis</span>
+            <span class="perk-sub">A todo el país en 24/48h</span>
+          </div>
+          <div class="perk-item">
+            <span class="perk-title">Cambios Simples</span>
+            <span class="perk-sub">30 días para cambio de talle</span>
+          </div>
         </div>
 
         <!-- Tags -->
@@ -110,6 +258,80 @@
           <span *ngFor="let tg of product()?.tags" class="tag-badge">
             #{{ tg }}
           </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Products in same Category -->
+    <section *ngIf="!loading() && relatedProducts().length > 0" class="related-section">
+      <div class="related-header">
+        <div>
+          <p class="related-tag">Misma categoría</p>
+          <h2 class="related-title">Más zapatillas de {{ product()?.category }} en 3D</h2>
+        </div>
+        <a [routerLink]="['/catalog']" [queryParams]="{ category: product()?.category }" class="view-more-link">
+          Ver toda la línea {{ product()?.category }} →
+        </a>
+      </div>
+
+      <div class="related-grid">
+        <app-product-card
+          *ngFor="let rel of relatedProducts()"
+          [product]="rel"
+        ></app-product-card>
+      </div>
+    </section>
+  </div>
+
+  <!-- Size Guide Modal -->
+  <div *ngIf="sizeGuideOpen()" class="modal-backdrop" (click)="sizeGuideOpen.set(false)">
+    <div class="size-modal" (click)="$event.stopPropagation()">
+      <div class="modal-top">
+        <h3>Guía de Talles — Hombre, Mujer y Niño</h3>
+        <button type="button" (click)="sizeGuideOpen.set(false)" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Medí la longitud de tu pie desde el talón hasta la punta del dedo más largo.</p>
+        <div class="size-tables-grid">
+          <div>
+            <h4>Niño (EU 28–35)</h4>
+            <table class="size-table">
+              <thead><tr><th>EU</th><th>CM</th></tr></thead>
+              <tbody>
+                <tr><td>28</td><td>17.5 cm</td></tr>
+                <tr><td>30</td><td>19.0 cm</td></tr>
+                <tr><td>32</td><td>20.5 cm</td></tr>
+                <tr><td>34</td><td>21.5 cm</td></tr>
+                <tr><td>35</td><td>22.5 cm</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Mujer (EU 35–41)</h4>
+            <table class="size-table">
+              <thead><tr><th>EU</th><th>CM</th></tr></thead>
+              <tbody>
+                <tr><td>36</td><td>23.0 cm</td></tr>
+                <tr><td>37</td><td>23.5 cm</td></tr>
+                <tr><td>38</td><td>24.0 cm</td></tr>
+                <tr><td>39</td><td>25.0 cm</td></tr>
+                <tr><td>40</td><td>25.5 cm</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Hombre (EU 39–45)</h4>
+            <table class="size-table">
+              <thead><tr><th>EU</th><th>CM</th></tr></thead>
+              <tbody>
+                <tr><td>40</td><td>25.5 cm</td></tr>
+                <tr><td>41</td><td>26.5 cm</td></tr>
+                <tr><td>42</td><td>27.0 cm</td></tr>
+                <tr><td>43</td><td>28.0 cm</td></tr>
+                <tr><td>44</td><td>28.5 cm</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
