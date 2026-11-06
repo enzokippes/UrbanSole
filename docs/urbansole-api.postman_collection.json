@@ -1,0 +1,207 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-urbansole0001",
+    "name": "UrbanSole API (Laravel 11 RESTful)",
+    "description": "Colección completa de endpoints para pruebas de la tienda UrbanSole 3D. Programación IV - UTN Facultad Regional Concordia.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Registro de Cliente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cliente Prueba\",\n  \"email\": \"test.cliente@urbansole.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Inicio de Sesión (Login Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@urbansole.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Perfil del Usuario Autenticado",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/auth/user", "host": ["{{base_url}}"], "path": ["auth", "user"] }
+          }
+        },
+        {
+          "name": "Cerrar Sesión (Logout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogo de Productos",
+      "item": [
+        {
+          "name": "Listar Productos Paginados",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/products?category=Hombre&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "category", "value": "Hombre" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detalle de Producto por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/products/1", "host": ["{{base_url}}"], "path": ["products", "1"] }
+          }
+        },
+        {
+          "name": "Listar Modelos 3D (.glb)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/models-3d", "host": ["{{base_url}}"], "path": ["models-3d"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pedidos y Compras",
+      "item": [
+        {
+          "name": "Crear Pedido (Checkout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkout_key\": \"c9b5d6e2-1234-4a56-8790-123456789abc\",\n  \"recipient\": \"Nicol Viera\",\n  \"phone\": \"3454123456\",\n  \"address\": \"San Martin 123\",\n  \"city\": \"Concordia\",\n  \"postal_code\": \"3200\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"size\": \"42\",\n      \"color\": \"Chicago Classic (Rojo/Blanco)\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Ver Mis Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Detalle de Seguimiento de Pedido",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/orders/1", "host": ["{{base_url}}"], "path": ["orders", "1"] }
+          }
+        },
+        {
+          "name": "Avanzar Estado (Tracking)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/orders/1/advance", "host": ["{{base_url}}"], "path": ["orders", "1", "advance"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Panel de Administración",
+      "item": [
+        {
+          "name": "Obtener Métricas del Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/admin/stats", "host": ["{{base_url}}"], "path": ["admin", "stats"] }
+          }
+        },
+        {
+          "name": "Listar Todos los Pedidos (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/admin/orders", "host": ["{{base_url}}"], "path": ["admin", "orders"] }
+          }
+        },
+        {
+          "name": "Disparar Webhook de Prueba a n8n",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"user.registered\",\n  \"notify_email\": \"admin@urbansole.com\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/admin/webhooks/n8n", "host": ["{{base_url}}"], "path": ["admin", "webhooks", "n8n"] }
+          }
+        }
+      ]
+    }
+  ]
+}
