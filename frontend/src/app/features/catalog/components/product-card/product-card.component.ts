@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../../core/models/product.model';
 import { CartService } from '../../../../core/services/cart.service';
+import { WishlistService } from '../../../../core/services/wishlist.service';
 
 @Component({
   selector: 'app-product-card',
@@ -14,6 +15,7 @@ import { CartService } from '../../../../core/services/cart.service';
 export class ProductCardComponent implements OnInit {
   @Input({ required: true }) product!: Product;
   private readonly cartService = inject(CartService);
+  readonly wishlist = inject(WishlistService);
 
   selectedSize = '';
   previewImage = signal<string>('');
@@ -54,5 +56,11 @@ export class ProductCardComponent implements OnInit {
     this.cartService.addItem(this.product, size, color);
     this.addedFeedback.set(true);
     setTimeout(() => this.addedFeedback.set(false), 1400);
+  }
+
+  toggleWishlist(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.wishlist.toggle(this.product);
   }
 }

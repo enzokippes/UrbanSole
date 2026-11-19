@@ -58,6 +58,12 @@
             <p class="dropdown-email">{{ authService.currentUser()?.email }}</p>
             <span *ngIf="authService.isAdmin()" class="role-badge">Admin</span>
           </div>
+          <a routerLink="/profile" class="dropdown-item" (click)="userMenuOpen.set(false)" style="display:block;text-decoration:none;color:#fff;">
+            Mi perfil
+          </a>
+          <a routerLink="/wishlist" class="dropdown-item" (click)="userMenuOpen.set(false)" style="display:block;text-decoration:none;color:#fff;">
+            Mis favoritos
+          </a>
           <a routerLink="/orders" class="dropdown-item" (click)="userMenuOpen.set(false)" style="display:block;text-decoration:none;color:#fff;">
             Mis pedidos
           </a>
@@ -75,6 +81,16 @@
           Ingresar
         </a>
       </ng-template>
+
+      <!-- Wishlist Link Button -->
+      <a *ngIf="authService.isAuthenticated()" routerLink="/wishlist" class="icon-btn" title="Mis favoritos">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="action-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        <span *ngIf="wishlistService.count() > 0" class="cart-badge wishlist-badge">
+          {{ wishlistService.count() }}
+        </span>
+      </a>
 
       <!-- Cart Trigger Button -->
       <button (click)="toggleCart()" class="icon-btn cart-btn" title="Carrito">
@@ -108,6 +124,12 @@
          (click)="mobileMenuOpen.set(false)"
          class="mobile-link">
         {{ cat.label }}
+      </a>
+      <a *ngIf="authService.isAuthenticated()" routerLink="/wishlist" (click)="mobileMenuOpen.set(false)" class="mobile-link">
+        Mis favoritos ({{ wishlistService.count() }})
+      </a>
+      <a *ngIf="authService.isAuthenticated()" routerLink="/profile" (click)="mobileMenuOpen.set(false)" class="mobile-link">
+        Mi perfil
       </a>
       <a *ngIf="authService.isAuthenticated()" routerLink="/orders" (click)="mobileMenuOpen.set(false)" class="mobile-link">
         Mis pedidos

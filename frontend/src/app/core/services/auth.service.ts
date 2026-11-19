@@ -28,12 +28,6 @@ export class AuthService {
     );
   }
 
-  socialLogin(provider: 'google' | 'github'): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/oauth`, { provider }).pipe(
-      tap(res => this.handleAuthSuccess(res))
-    );
-  }
-
   logout(): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/logout`, {}).pipe(
       tap({
@@ -41,6 +35,21 @@ export class AuthService {
         error: () => this.clearSession()
       })
     );
+  }
+
+  updateProfile(data: { name: string; email: string }): Observable<{ user: User; message: string }> {
+    return this.http.put<{ user: User; message: string }>(`${this.apiUrl}/auth/profile`, data).pipe(
+      tap(res => {
+        if (res.user) {
+          localStorage.setItem('urbansole_user', JSON.stringify(res.user));
+          this.currentUser.set(res.user);
+        }
+      })
+    );
+  }
+
+  changePassword(data: { current_password: string; password: string; password_confirmation: string }): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/auth/password`, data);
   }
 
   clearSession(): void {

@@ -302,3 +302,43 @@
   font-size: 0.85rem;
   font-weight: 900;
 }
+
+.rating-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  padding: 1px 7px;
+  border-radius: 9999px;
+}
+
+.fav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.fav-btn:hover {
+  border-color: rgba(244, 63, 94, 0.5);
+  color: #fb7185;
+}
+
+.fav-btn.fav-active {
+  background: rgba(244, 63, 94, 0.16);
+  border-color: rgba(244, 63, 94, 0.55);
+  color: #f43f5e;
+}
+
+.fav-icon {
+  width: 16px;
+  height: 16px;
+}

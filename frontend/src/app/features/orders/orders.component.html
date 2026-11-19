@@ -1,7 +1,253 @@
-<main class="sprint-page"><a routerLink="/catalog">Volver al catálogo</a><h1>{{ id ? 'Detalle del pedido' : 'Mis pedidos' }}</h1>
-<p *ngIf="loading()">Cargando…</p><p *ngIf="error()" class="error" role="alert">{{ error() }} <button class="btn-secondary" (click)="load()">Reintentar</button></p>
-<ng-container *ngIf="detail() as order"><div class="panel"><h2>Pedido #{{ order.id }} · {{ labels[order.status] }}</h2><p>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
-<div class="row" *ngFor="let item of order.items"><span>{{ item.product_name }} · {{ item.size }} · {{ item.color }} × {{ item.quantity }}</span><strong>{{ +item.unit_price * item.quantity | currency:'ARS':'symbol':'1.2-2' }}</strong></div>
-<h2>Total: {{ order.total | currency:'ARS':'symbol':'1.2-2' }}</h2><p>Entrega a {{ order.recipient }} · {{ order.phone }}</p><p>{{ order.address }}, {{ order.city }} ({{ order.postal_code }})</p><a routerLink="/orders">Ver todos mis pedidos</a></div></ng-container>
-<ng-container *ngIf="!id && page() as result"><p *ngIf="!result.data.length">Todavía no tenés pedidos.</p><div class="panel" *ngFor="let order of result.data"><div class="row"><a [routerLink]="['/orders', order.id]">Pedido #{{ order.id }}</a><span>{{ labels[order.status] }}</span><strong>{{ order.total | currency:'ARS':'symbol':'1.2-2' }}</strong></div><p>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</p></div>
-<button class="btn-secondary" (click)="load(result.current_page - 1)" [disabled]="loading() || result.current_page === 1">Anterior</button><span>{{ result.current_page }} / {{ result.last_page }}</span><button class="btn-secondary" (click)="load(result.current_page + 1)" [disabled]="loading() || result.current_page === result.last_page">Siguiente</button></ng-container></main>
+<main class="orders-page">
+  <div class="container">
+    <div class="orders-head">
+      <div>
+        <span class="orders-eyebrow">Historial de compras</span>
+        <h1>{{ id ? 'Detalle del pedido #' + (detail()?.user_order_number || id) : 'Mis pedidos' }}</h1>
+        <p class="orders-sub" *ngIf="!id && page() as res">
+          {{ res.total }} {{ res.total === 1 ? 'pedido registrado' : 'pedidos registrados' }} en tu cuenta.
+        </p>
+      </div>
+      <div class="head-links">
+        <a *ngIf="id" routerLink="/orders" class="btn-secondary">← Todos mis pedidos</a>
+        <a routerLink="/catalog" class="btn-secondary">Seguir comprando</a>
+      </div>
+    </div>
+
+    <div *ngIf="loading()" class="state-card">Cargando pedidos…</div>
+
+    <div *ngIf="feedback()" class="banner-success" role="status">{{ feedback() }}</div>
+
+    <div *ngIf="error()" class="banner-error" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="btn-secondary btn-xs" (click)="load()">Reintentar</button>
+    </div>
+
+    <!-- DETALLE DE UN PEDIDO -->
+    <ng-container *ngIf="detail() as order">
+      <div class="order-card detail-card">
+        <div class="order-top">
+          <div>
+            <div class="order-title-row">
+              <h2>Pedido #{{ order.user_order_number || order.id }}</h2>
+              <span class="status-badge" [attr.data-status]="order.status">{{ labels[order.status] }}</span>
+              <span
+                *ngIf="order.payment_status"
+                class="payment-badge"
+                [attr.data-payment]="order.payment_status"
+              >
+                {{ paymentStatusLabels[order.payment_status] }}
+              </span>
+            </div>
+            <p class="order-date">Realizado el {{ order.created_at | date:'dd/MM/yyyy · HH:mm' }} hs</p>
+          </div>
+          <div class="order-total-box">
+            <span class="total-label">Total</span>
+            <strong class="total-amount">{{ order.total | currency:'ARS':'symbol':'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="items-box">
+          <div class="item-line" *ngFor="let item of order.items">
+            <span>
+              <strong class="qty-badge">{{ item.quantity }}x</strong>
+              <span class="item-name">{{ item.product_name }}</span>
+              <span class="item-meta">(Talle {{ item.size }} · {{ item.color }})</span>
+            </span>
+            <strong class="item-price">{{ +item.unit_price * item.quantity | currency:'ARS':'symbol':'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="shipping-grid">
+          <div class="shipping-item">
+            <span class="ship-label">Destinatario y entrega</span>
+            <strong>{{ order.recipient }} · {{ deliveryMethodLabels[order.delivery_method || 'standard'] }}</strong>
+            <span class="ship-sub">Tel: {{ order.phone }} · {{ order.address }}, {{ order.city }} (CP {{ order.postal_code }})</span>
+          </div>
+          <div class="shipping-item">
+            <span class="ship-label">Forma de pago</span>
+            <strong>{{ paymentMethodLabels[order.payment_method || 'transfer'] }}</strong>
+            <span class="ship-sub">
+              {{ paymentStatusLabels[order.payment_status || 'pending'] }}
+              <ng-container *ngIf="order.payment_reference"> · Ref: {{ order.payment_reference }}</ng-container>
+            </span>
+          </div>
+        </div>
+
+        <!-- CIRCUITO DE TRANSFERENCIA BANCARIA -->
+        <div
+          *ngIf="(order.payment_method || 'transfer') === 'transfer' && order.status !== 'cancelled' && order.payment_status !== 'paid'"
+          class="transfer-box"
+        >
+          <div class="transfer-head">
+            <div>
+              <h3>Datos para transferir ({{ order.total | currency:'ARS':'symbol':'1.2-2' }})</h3>
+              <p>Realizá la transferencia y adjuntá el comprobante para que verifiquemos tu pago.</p>
+            </div>
+            <span *ngIf="copiedAlias()" class="copied-pill">✓ Copiado</span>
+          </div>
+
+          <div *ngIf="bankInfo() as bank" class="bank-grid">
+            <div class="bank-row">
+              <span>Alias:</span>
+              <strong>{{ bank.alias }}</strong>
+              <button type="button" (click)="copyText(bank.alias)" class="copy-btn">Copiar</button>
+            </div>
+            <div class="bank-row">
+              <span>CBU / CVU:</span>
+              <strong>{{ bank.cbu }}</strong>
+              <button type="button" (click)="copyText(bank.cbu)" class="copy-btn">Copiar</button>
+            </div>
+            <div class="bank-row">
+              <span>Titular:</span>
+              <strong>{{ bank.holder }} ({{ bank.bank_name }})</strong>
+            </div>
+          </div>
+
+          <div class="proof-upload-bar">
+            <input
+              type="text"
+              [(ngModel)]="paymentReference"
+              maxlength="120"
+              placeholder="N° de operación / banco emisor (opcional)"
+              class="ref-input"
+            />
+            <input
+              #proofFileInput
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.pdf"
+              (change)="onProofFileSelected(order, $event)"
+              class="hidden-file"
+            />
+            <button
+              type="button"
+              (click)="proofFileInput.click()"
+              [disabled]="uploadingProofId() === order.id"
+              class="btn-primary"
+            >
+              {{ uploadingProofId() === order.id ? 'Subiendo comprobante...' : (order.has_payment_proof ? 'Reemplazar comprobante' : 'Subir comprobante (JPG/PNG/PDF)') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="order-actions">
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="downloadReceipt(order.id, order.user_order_number)"
+            [disabled]="downloadingId() === order.id"
+          >
+            {{ downloadingId() === order.id ? 'Generando PDF...' : 'Descargar Recibo PDF' }}
+          </button>
+          <button
+            *ngIf="order.has_payment_proof"
+            type="button"
+            class="btn-secondary"
+            (click)="viewProof(order.id)"
+            [disabled]="viewingProofId() === order.id"
+          >
+            {{ viewingProofId() === order.id ? 'Abriendo...' : 'Ver mi comprobante' }}
+          </button>
+          <button
+            *ngIf="order.status === 'pending'"
+            type="button"
+            class="btn-danger"
+            (click)="cancelOrder(order)"
+            [disabled]="cancellingId() === order.id"
+          >
+            {{ cancellingId() === order.id ? 'Cancelando...' : 'Cancelar pedido' }}
+          </button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- LISTADO DE PEDIDOS -->
+    <ng-container *ngIf="!id && page() as result">
+      <div *ngIf="!result.data.length" class="state-card empty-orders">
+        <h3>Todavía no tenés compras</h3>
+        <p>Explorá nuestro catálogo 3D y elegí tu próximo par.</p>
+        <a routerLink="/catalog" class="btn-primary">Explorar catálogo</a>
+      </div>
+
+      <div class="orders-list">
+        <article class="order-card" *ngFor="let order of result.data">
+          <div class="order-top">
+            <div>
+              <div class="order-title-row">
+                <a [routerLink]="['/orders', order.id]" class="order-title-link">Pedido #{{ order.user_order_number || order.id }}</a>
+                <span class="status-badge" [attr.data-status]="order.status">{{ labels[order.status] }}</span>
+                <span
+                  *ngIf="order.payment_status"
+                  class="payment-badge"
+                  [attr.data-payment]="order.payment_status"
+                >
+                  {{ paymentStatusLabels[order.payment_status] }}
+                </span>
+              </div>
+              <p class="order-date">
+                {{ order.created_at | date:'dd/MM/yyyy · HH:mm' }} · {{ paymentMethodLabels[order.payment_method || 'transfer'] }} · {{ deliveryMethodLabels[order.delivery_method || 'standard'] }}
+              </p>
+            </div>
+            <div class="order-total-box">
+              <span class="total-label">Total</span>
+              <strong class="total-amount">{{ order.total | currency:'ARS':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div *ngIf="order.items?.length" class="items-box">
+            <div class="item-line" *ngFor="let item of order.items">
+              <span>
+                <strong class="qty-badge">{{ item.quantity }}x</strong>
+                <span class="item-name">{{ item.product_name }}</span>
+                <span class="item-meta">(Talle {{ item.size }} · {{ item.color }})</span>
+              </span>
+              <strong class="item-price">{{ +item.unit_price * item.quantity | currency:'ARS':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="order-actions">
+            <a [routerLink]="['/orders', order.id]" class="btn-secondary">
+              {{ (order.payment_method || 'transfer') === 'transfer' && order.payment_status === 'pending' && order.status !== 'cancelled' ? 'Transferir / Subir comprobante' : 'Ver detalle' }}
+            </a>
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="downloadReceipt(order.id, order.user_order_number)"
+              [disabled]="downloadingId() === order.id"
+            >
+              {{ downloadingId() === order.id ? 'Generando...' : 'Descargar Recibo PDF' }}
+            </button>
+            <button
+              *ngIf="order.has_payment_proof"
+              type="button"
+              class="btn-secondary"
+              (click)="viewProof(order.id)"
+              [disabled]="viewingProofId() === order.id"
+            >
+              Ver comprobante
+            </button>
+            <button
+              *ngIf="order.status === 'pending'"
+              type="button"
+              class="btn-danger"
+              (click)="cancelOrder(order)"
+              [disabled]="cancellingId() === order.id"
+            >
+              {{ cancellingId() === order.id ? 'Cancelando...' : 'Cancelar pedido' }}
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <div class="pagination-bar" *ngIf="result.last_page > 1">
+        <button class="btn-secondary" (click)="load(result.current_page - 1)" [disabled]="loading() || result.current_page === 1">
+          ← Anterior
+        </button>
+        <span class="page-indicator">Página {{ result.current_page }} de {{ result.last_page }}</span>
+        <button class="btn-secondary" (click)="load(result.current_page + 1)" [disabled]="loading() || result.current_page === result.last_page">
+          Siguiente →
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</main>

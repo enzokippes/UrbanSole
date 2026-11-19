@@ -1,16 +1,208 @@
-<main class="sprint-page">
-<h1>Finalizar compra</h1><p>Confirmá tus datos de entrega. El pedido queda pendiente de confirmación.</p>
-<p *ngIf="error()" role="alert" class="error">{{ error() }}</p>
-<p *ngIf="!cart.items().length">Tu carrito está vacío.</p>
-<form *ngIf="cart.items().length" #checkout="ngForm" (ngSubmit)="submit()">
-<div class="panel"><h2>Datos de entrega</h2><div class="grid">
-<label>Nombre del destinatario<input name="recipient" [(ngModel)]="form.recipient" required maxlength="255" [disabled]="busy()"></label>
-<label>Teléfono<input name="phone" [(ngModel)]="form.phone" required maxlength="40" [disabled]="busy()"></label>
-<label>Dirección<input name="address" [(ngModel)]="form.address" required maxlength="255" [disabled]="busy()"></label>
-<label>Ciudad<input name="city" [(ngModel)]="form.city" required maxlength="255" [disabled]="busy()"></label>
-<label>Código postal<input name="postal_code" [(ngModel)]="form.postal_code" required maxlength="20" [disabled]="busy()"></label>
-</div></div>
-<div class="panel"><h2>Resumen</h2><div class="row" *ngFor="let item of cart.items()"><span>{{ item.product.name }} · {{ item.size }} · {{ item.color }} × {{ item.quantity }}</span><strong>{{ item.price * item.quantity | currency:'ARS':'symbol':'1.2-2' }}</strong></div>
-<p>Envío: sin cargo</p><p>Total estimado: {{ cart.total() | currency:'ARS':'symbol':'1.2-2' }}</p><p>El precio y el stock se verifican al confirmar. No se realiza un cobro en línea.</p>
-<button class="btn-primary" [disabled]="checkout.invalid || busy()">{{ busy() ? 'Confirmando…' : 'Confirmar pedido' }}</button></div>
-</form></main>
+<main class="checkout-page">
+  <div class="container">
+    <div class="checkout-head">
+      <div>
+        <span class="checkout-eyebrow">Compra segura · Recibo PDF automático</span>
+        <h1>Finalizar compra</h1>
+        <p class="checkout-sub">Completá tus datos de entrega para confirmar tu pedido.</p>
+      </div>
+      <a routerLink="/catalog" class="btn-secondary">← Seguir comprando</a>
+    </div>
+
+    <div *ngIf="error()" role="alert" class="banner-error">{{ error() }}</div>
+
+    <div *ngIf="!cart.items().length" class="empty-checkout">
+      <h2>Tu carrito está vacío</h2>
+      <p>Agregá tus zapatillas favoritas antes de confirmar un pedido.</p>
+      <a routerLink="/catalog" class="btn-primary">Explorar catálogo 3D</a>
+    </div>
+
+    <form *ngIf="cart.items().length" #checkout="ngForm" (ngSubmit)="submit()" class="checkout-layout">
+      <!-- COLUMNA IZQUIERDA: DATOS DE ENTREGA Y MEDIO DE PAGO -->
+      <div class="checkout-left">
+        <section class="card-panel">
+          <div class="step-head">
+            <span class="step-badge">1</span>
+            <div>
+              <h2>Destinatario y contacto</h2>
+              <p>Usaremos estos datos para coordinar la entrega.</p>
+            </div>
+          </div>
+
+          <div class="fields-grid">
+            <label class="field">
+              <span>Nombre completo</span>
+              <input name="recipient" [(ngModel)]="form.recipient" required maxlength="255" placeholder="Ej: Juan Pérez" [disabled]="busy()" class="input" />
+            </label>
+            <label class="field">
+              <span>Teléfono / WhatsApp</span>
+              <input name="phone" [(ngModel)]="form.phone" required maxlength="40" placeholder="Ej: 3454 000 000" [disabled]="busy()" class="input" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card-panel">
+          <div class="step-head">
+            <span class="step-badge">2</span>
+            <div>
+              <h2>Dirección de entrega</h2>
+              <p>Indicá el domicilio donde querés recibir tu compra.</p>
+            </div>
+          </div>
+
+          <div class="fields-grid">
+            <label class="field field-full">
+              <span>Calle, número, piso / depto</span>
+              <input name="address" [(ngModel)]="form.address" required maxlength="255" placeholder="Ej: Av. Entre Ríos 450" [disabled]="busy()" class="input" />
+            </label>
+            <label class="field">
+              <span>Ciudad</span>
+              <input name="city" [(ngModel)]="form.city" required maxlength="255" placeholder="Ej: Concordia" [disabled]="busy()" class="input" />
+            </label>
+            <label class="field">
+              <span>Código postal</span>
+              <input name="postal_code" [(ngModel)]="form.postal_code" required maxlength="20" placeholder="Ej: 3200" [disabled]="busy()" class="input" />
+            </label>
+          </div>
+
+          <div class="option-group">
+            <span class="group-label">Modalidad de envío</span>
+            <div class="choice-grid">
+              <button type="button" (click)="deliveryMethod = 'standard'" class="choice-card" [class.active]="deliveryMethod === 'standard'">
+                <strong>Envío a domicilio</strong>
+                <span>Gratis · Despacho en 24-48 hs</span>
+              </button>
+              <button type="button" (click)="deliveryMethod = 'pickup'" class="choice-card" [class.active]="deliveryMethod === 'pickup'">
+                <strong>Retiro en tienda</strong>
+                <span>Gratis · Listo en el día</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card-panel">
+          <div class="step-head">
+            <span class="step-badge">3</span>
+            <div>
+              <h2>Forma de pago</h2>
+              <p>Elegí cómo querés abonar tu compra.</p>
+            </div>
+          </div>
+
+          <div class="choice-grid three">
+            <button type="button" (click)="paymentMethod = 'transfer'" class="choice-card" [class.active]="paymentMethod === 'transfer'">
+              <strong>Transferencia</strong>
+              <span>Alias / CBU + Comprobante</span>
+            </button>
+            <button type="button" (click)="paymentMethod = 'card'" class="choice-card" [class.active]="paymentMethod === 'card'">
+              <strong>Tarjeta</strong>
+              <span>Acreditación inmediata</span>
+            </button>
+            <button type="button" (click)="paymentMethod = 'cash'" class="choice-card" [class.active]="paymentMethod === 'cash'">
+              <strong>Efectivo</strong>
+              <span>Al recibir / retirar</span>
+            </button>
+          </div>
+
+          <div *ngIf="paymentMethod === 'transfer' && bankInfo() as bank" class="bank-preview-box">
+            <strong>Datos para transferir al confirmar tu pedido:</strong>
+            <span>Alias: <code>{{ bank.alias }}</code> · CBU: <code>{{ bank.cbu }}</code></span>
+            <span>Titular: {{ bank.holder }} ({{ bank.bank_name }})</span>
+            <small>Al confirmar podrás subir tu comprobante directamente desde el detalle del pedido.</small>
+          </div>
+
+          <div *ngIf="paymentMethod === 'card'" class="card-payment-box">
+            <div class="card-visual-preview">
+              <div class="card-preview-top">
+                <span class="card-chip"></span>
+                <strong class="card-brand-badge">{{ detectedCardBrand() }}</strong>
+              </div>
+              <div class="card-preview-num">{{ maskedCardDisplay() }}</div>
+              <div class="card-preview-bottom">
+                <span>{{ (card.holder || 'TITULAR DE LA TARJETA') | uppercase }}</span>
+                <span>{{ card.expiry || 'MM/AA' }}</span>
+              </div>
+            </div>
+
+            <div class="card-box-head">
+              <strong>Datos de la tarjeta</strong>
+              <button type="button" (click)="fillTestCard()" class="copy-test-btn">Usar tarjeta de prueba</button>
+            </div>
+
+            <div class="fields-grid">
+              <label class="field field-full">
+                <span>Nombre y apellido del titular</span>
+                <input name="card_holder" [(ngModel)]="card.holder" required minlength="3" maxlength="120" placeholder="Como figura en el plástico" [disabled]="busy()" class="input" />
+              </label>
+              <label class="field field-full">
+                <span>Número de tarjeta</span>
+                <input name="card_number" [(ngModel)]="card.number" (input)="formatCardNumber()" required minlength="16" maxlength="19" inputmode="numeric" placeholder="4532 0151 1283 0366" [disabled]="busy()" class="input" />
+              </label>
+              <label class="field">
+                <span>Vencimiento (MM/AA)</span>
+                <input name="card_expiry" [(ngModel)]="card.expiry" (input)="formatCardExpiry()" required minlength="5" maxlength="5" inputmode="numeric" placeholder="12/29" [disabled]="busy()" class="input" />
+              </label>
+              <label class="field">
+                <span>Código de seguridad (CVV)</span>
+                <input name="card_cvv" type="password" [(ngModel)]="card.cvv" required minlength="3" maxlength="4" inputmode="numeric" placeholder="123" [disabled]="busy()" class="input" />
+              </label>
+              <label class="field field-full">
+                <span>Cuotas</span>
+                <select name="card_installments" [(ngModel)]="card.installments" [disabled]="busy()" class="input">
+                  <option [ngValue]="1">1 pago sin interés de {{ installmentAmount(1) | currency:'ARS':'symbol':'1.2-2' }}</option>
+                  <option [ngValue]="3">3 cuotas sin interés de {{ installmentAmount(3) | currency:'ARS':'symbol':'1.2-2' }}</option>
+                  <option [ngValue]="6">6 cuotas sin interés de {{ installmentAmount(6) | currency:'ARS':'symbol':'1.2-2' }}</option>
+                </select>
+              </label>
+            </div>
+            <small class="card-security-hint">No almacenamos el número completo ni el CVV: solo registramos la marca y últimos 4 dígitos tras aprobar el pago.</small>
+          </div>
+        </section>
+      </div>
+
+      <!-- COLUMNA DERECHA: RESUMEN STICKY -->
+      <aside class="checkout-right">
+        <section class="card-panel summary-card">
+          <h2>Resumen del pedido ({{ cart.count() }})</h2>
+
+          <div class="summary-items">
+            <div class="summary-item" *ngFor="let item of cart.items()">
+              <img [src]="item.product.images?.[0] || '/images/jordan-chicago.jpg'" [alt]="item.product.name" class="item-thumb" />
+              <div class="item-info">
+                <strong class="item-title">{{ item.product.name }}</strong>
+                <span class="item-sub">{{ item.product.brand }} · Talle {{ item.size }} · {{ item.color }}</span>
+                <span class="item-qty">Cantidad: {{ item.quantity }}</span>
+              </div>
+              <strong class="item-price">{{ item.price * item.quantity | currency:'ARS':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="summary-totals">
+            <div class="tot-row">
+              <span>Subtotal</span>
+              <span>{{ cart.total() | currency:'ARS':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="tot-row">
+              <span>Envío</span>
+              <span class="free-tag">Gratis</span>
+            </div>
+            <div class="tot-row grand">
+              <strong>Total</strong>
+              <strong class="grand-amount">{{ cart.total() | currency:'ARS':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="receipt-note" *ngIf="authService.currentUser()?.email as mail">
+            Al confirmar, te enviamos tu <strong>Recibo oficial en PDF</strong> a <strong>{{ mail }}</strong>.
+          </div>
+
+          <button type="submit" class="btn-primary confirm-btn" [disabled]="checkout.invalid || busy()">
+            {{ busy() ? (paymentMethod === 'card' ? 'Procesando pago…' : 'Confirmando pedido…') : (paymentMethod === 'card' ? 'Pagar y confirmar pedido' : 'Confirmar pedido') }}
+          </button>
+
+          <p class="legal-hint">El stock y los precios finales se validan en el servidor al confirmar.</p>
+        </section>
+      </aside>
+    </form>
+  </div>
+</main>

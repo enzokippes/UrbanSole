@@ -138,6 +138,9 @@
             <span *ngIf="product()?.model_3d_url" class="model-faithful-badge">
               ✓ Modelo 3D Fiel al Calzado
             </span>
+            <span *ngIf="product()?.reviews_count" class="detail-rating-pill">
+              ★ {{ product()?.reviews_avg_rating | number:'1.1-1' }} ({{ product()?.reviews_count }} {{ product()?.reviews_count === 1 ? 'reseña' : 'reseñas' }})
+            </span>
           </div>
 
           <h1 class="product-title">{{ product()?.name }}</h1>
@@ -235,6 +238,16 @@
             </svg>
             <span>{{ viewMode() === '3d' ? 'Cambiar a Galería de Fotos' : 'Inspeccionar Zapatilla en 3D (360°)' }}</span>
           </button>
+
+          <button
+            *ngIf="product() as prod"
+            type="button"
+            (click)="toggleWishlist()"
+            class="btn-secondary wishlist-detail-btn"
+            [class.active]="wishlist.isFavorite(prod.id)"
+          >
+            <span>{{ wishlist.isFavorite(prod.id) ? '♥ Guardado en Favoritos' : '♡ Guardar en Favoritos' }}</span>
+          </button>
         </div>
 
         <!-- Feature Highlights -->
@@ -261,6 +274,136 @@
         </div>
       </div>
     </div>
+
+    <!-- Reviews & Ratings Section -->
+    <section *ngIf="!loading() && product() as prod" class="reviews-section">
+      <div class="reviews-header">
+        <div>
+          <p class="related-tag">Opiniones reales</p>
+          <h2 class="related-title">Reseñas y Calificaciones</h2>
+        </div>
+        <div *ngIf="prod.reviews_count" class="reviews-summary-badge">
+          <strong class="summary-score">{{ prod.reviews_avg_rating | number:'1.1-1' }}</strong>
+          <span class="summary-stars">★★★★★</span>
+          <span class="summary-count">Basado en {{ prod.reviews_count }} {{ prod.reviews_count === 1 ? 'opinión' : 'opiniones' }}</span>
+        </div>
+      </div>
+
+      <div class="reviews-grid">
+        <div class="review-form-card">
+          <h3>Dejá tu calificación</h3>
+          <p class="review-form-sub">Solo los clientes que compraron y recibieron este modelo pueden calificarlo.</p>
+
+          <ng-container *ngIf="authService.isAuthenticated(); else loginToReviewTpl">
+            <ng-container *ngIf="prod.can_review; else notEligibleReviewTpl">
+              <span class="verified-badge form-verified-pill">✓ Compra entregada verificada</span>
+              <div *ngIf="reviewFeedback()" class="review-alert success" role="status">{{ reviewFeedback() }}</div>
+              <div *ngIf="reviewError()" class="review-alert error" role="alert">{{ reviewError() }}</div>
+
+              <div class="stars-picker" role="group" aria-label="Calificación en estrellas">
+                <button
+                  *ngFor="let s of [1, 2, 3, 4, 5]"
+                  type="button"
+                  (click)="setRating(s)"
+                  class="star-pick-btn"
+                  [class.filled]="s <= reviewRating()"
+                  [title]="s + (s === 1 ? ' estrella' : ' estrellas')"
+                >
+                  ★
+                </button>
+                <span class="picked-label">{{ reviewRating() }} / 5</span>
+              </div>
+
+              <textarea
+                [(ngModel)]="reviewComment"
+                rows="3"
+                maxlength="1000"
+                placeholder="Ej: Muy cómodas, el talle coincide perfecto..."
+                class="review-textarea"
+              ></textarea>
+
+              <button
+                type="button"
+                (click)="submitReview()"
+                [disabled]="submittingReview()"
+                class="btn-primary review-submit-btn"
+              >
+                {{ submittingReview() ? 'Publicando...' : 'Publicar reseña' }}
+              </button>
+            </ng-container>
+
+            <ng-template #notEligibleReviewTpl>
+              <div *ngIf="prod.review_eligibility === 'already_reviewed'; else notYetDeliveredOrBoughtTpl">
+                <div *ngIf="reviewFeedback()" class="review-alert success" role="status">{{ reviewFeedback() }}</div>
+                <div class="eligibility-box">
+                  <span class="verified-badge">✓ Ya calificaste este modelo</span>
+                  <p>
+                    Ya publicaste tu reseña para esta zapatilla. Solo se permite <strong>1 opinión por usuario</strong> en cada producto.
+                  </p>
+                </div>
+              </div>
+
+              <ng-template #notYetDeliveredOrBoughtTpl>
+                <div *ngIf="prod.review_eligibility === 'pending_delivery'; else noPurchaseTpl" class="eligibility-box pending">
+                  <p>
+                    Tenés un pedido en curso de este modelo. Podrás dejar tu calificación y reseña apenas tu pedido figure como <strong>Entregado</strong>.
+                  </p>
+                  <a routerLink="/orders" class="btn-secondary">Ver estado en Mis pedidos</a>
+                </div>
+
+                <ng-template #noPurchaseTpl>
+                  <div class="eligibility-box">
+                    <p>
+                      Solo los clientes que compraron esta zapatilla y ya recibieron su pedido (estado <strong>Entregado</strong>) pueden publicar una calificación.
+                    </p>
+                  </div>
+                </ng-template>
+              </ng-template>
+            </ng-template>
+          </ng-container>
+
+          <ng-template #loginToReviewTpl>
+            <p class="login-review-hint">Iniciá sesión con la cuenta que realizaste la compra para verificar tu pedido entregado y opinar.</p>
+            <a routerLink="/login" class="btn-primary">Ingresar a mi cuenta</a>
+          </ng-template>
+        </div>
+
+        <div class="reviews-list-col">
+          <div *ngIf="!prod.reviews?.length" class="empty-reviews">
+            Todavía no hay reseñas para este modelo. ¡Sé el primero en opinar!
+          </div>
+
+          <article *ngFor="let rev of prod.reviews" class="review-card">
+            <div class="review-card-top">
+              <div class="review-author-wrap">
+                <span class="rev-avatar">{{ initialsFor(rev.author_name) }}</span>
+                <div>
+                  <div class="rev-name-row">
+                    <strong>{{ rev.author_name }}</strong>
+                    <span *ngIf="rev.verified_purchase" class="verified-badge">✓ Compra verificada</span>
+                  </div>
+                  <span class="rev-date">{{ rev.created_at | date:'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+              <div class="rev-right">
+                <span class="rev-stars" [attr.aria-label]="rev.rating + ' de 5 estrellas'">
+                  <ng-container *ngFor="let st of [1,2,3,4,5]">{{ st <= rev.rating ? '★' : '☆' }}</ng-container>
+                </span>
+                <button
+                  *ngIf="canDeleteReview(rev)"
+                  type="button"
+                  (click)="removeReview(rev)"
+                  class="rev-del-btn"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+            <p class="rev-comment">{{ rev.comment }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
 
     <!-- Related Products in same Category -->
     <section *ngIf="!loading() && relatedProducts().length > 0" class="related-section">

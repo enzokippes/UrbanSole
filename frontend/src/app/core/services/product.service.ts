@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AdminStats, Model3dOption, PaginatedProducts, Product, ProductFilters } from '../models/product.model';
+import { AdminStats, Model3dOption, PaginatedProducts, Product, ProductFilters, ProductReview } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -81,11 +81,51 @@ export class ProductService {
     return this.http.get<AdminStats>(`${this.apiUrl}/admin/stats`);
   }
 
-  triggerN8nWebhook(event: string, notifyEmail?: string, data?: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/admin/webhooks/n8n`, {
+  sendNotification(event: string, notifyEmail?: string, data?: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin/notifications/send`, {
       event,
       notify_email: notifyEmail,
       data
     });
+  }
+
+  triggerN8nWebhook(event: string, notifyEmail?: string, data?: any): Observable<any> {
+    return this.sendNotification(event, notifyEmail, data);
+  }
+
+  saveReview(productId: number, payload: { rating: number; comment: string }): Observable<{
+    review: ProductReview;
+    reviews_avg_rating: number | null;
+    reviews_count: number;
+    can_review?: boolean;
+    review_eligibility?: 'guest' | 'can_review' | 'already_reviewed' | 'pending_delivery' | 'no_purchase';
+    message: string;
+  }> {
+    return this.http.post<{
+      review: ProductReview;
+      reviews_avg_rating: number | null;
+      reviews_count: number;
+      can_review?: boolean;
+      review_eligibility?: 'guest' | 'can_review' | 'already_reviewed' | 'pending_delivery' | 'no_purchase';
+      message: string;
+    }>(`${this.apiUrl}/products/${productId}/reviews`, payload);
+  }
+
+  deleteReview(productId: number, reviewId: number): Observable<{
+    deleted_id: number;
+    reviews_avg_rating: number | null;
+    reviews_count: number;
+    can_review?: boolean;
+    review_eligibility?: 'guest' | 'can_review' | 'already_reviewed' | 'pending_delivery' | 'no_purchase';
+    message: string;
+  }> {
+    return this.http.delete<{
+      deleted_id: number;
+      reviews_avg_rating: number | null;
+      reviews_count: number;
+      can_review?: boolean;
+      review_eligibility?: 'guest' | 'can_review' | 'already_reviewed' | 'pending_delivery' | 'no_purchase';
+      message: string;
+    }>(`${this.apiUrl}/products/${productId}/reviews/${reviewId}`);
   }
 }

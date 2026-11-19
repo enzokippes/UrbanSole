@@ -26,7 +26,7 @@
     </div>
 
     <!-- Feedback Alerts -->
-    <div *ngIf="errorMessage()" class="alert alert-error">
+    <div *ngIf="errorMessage()" class="alert alert-error" role="alert">
       {{ errorMessage() }}
     </div>
 
@@ -36,7 +36,12 @@
         <label for="login-email" class="form-label">Correo Electrónico</label>
         <input
           id="login-email"
+          name="email"
           type="email"
+          autocomplete="username"
+          spellcheck="false"
+          enterkeyhint="next"
+          required
           formControlName="email"
           placeholder="tu@email.com"
           class="form-input"
@@ -52,7 +57,11 @@
         <div class="password-wrapper">
           <input
             id="login-password"
+            name="password"
             [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="current-password"
+            enterkeyhint="done"
+            required
             formControlName="password"
             placeholder="••••••••"
             class="form-input"
@@ -79,7 +88,11 @@
         <label for="reg-name" class="form-label">Nombre Completo</label>
         <input
           id="reg-name"
+          name="name"
           type="text"
+          autocomplete="name"
+          enterkeyhint="next"
+          required
           formControlName="name"
           placeholder="Juan Pérez"
           class="form-input"
@@ -94,7 +107,12 @@
         <label for="reg-email" class="form-label">Correo Electrónico</label>
         <input
           id="reg-email"
+          name="email"
           type="email"
+          autocomplete="username"
+          spellcheck="false"
+          enterkeyhint="next"
+          required
           formControlName="email"
           placeholder="tu@email.com"
           class="form-input"
@@ -110,7 +128,11 @@
         <div class="password-wrapper">
           <input
             id="reg-password"
+            name="new-password"
             [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="new-password"
+            enterkeyhint="next"
+            required
             formControlName="password"
             placeholder="••••••••"
             class="form-input"
@@ -129,12 +151,22 @@
         <label for="reg-confirm" class="form-label">Confirmar Contraseña</label>
         <input
           id="reg-confirm"
+          name="confirm-password"
           type="password"
+          autocomplete="new-password"
+          enterkeyhint="done"
+          required
           formControlName="password_confirmation"
           placeholder="••••••••"
           class="form-input"
-          [class.invalid]="registerForm.get('password_confirmation')?.touched && registerForm.get('password_confirmation')?.invalid"
+          [class.invalid]="registerForm.get('password_confirmation')?.touched && (registerForm.get('password_confirmation')?.invalid || registerForm.value.password !== registerForm.value.password_confirmation)"
         />
+        <span *ngIf="registerForm.get('password_confirmation')?.touched && registerForm.get('password_confirmation')?.invalid" class="field-error">
+          Confirmá tu contraseña.
+        </span>
+        <span *ngIf="registerForm.get('password_confirmation')?.touched && registerForm.get('password_confirmation')?.valid && registerForm.value.password !== registerForm.value.password_confirmation" class="field-error">
+          Las contraseñas no coinciden.
+        </span>
       </div>
 
       <button type="submit" [disabled]="loading()" class="btn-primary auth-submit-btn">
@@ -142,32 +174,5 @@
         <span *ngIf="loading()">Procesando...</span>
       </button>
     </form>
-
-    <!-- OAuth 2.0 External Identity Providers (Semana 7) -->
-    <div class="oauth-divider">
-      <span>O continuar con OAuth 2.0</span>
-    </div>
-
-    <div class="oauth-grid">
-      <button type="button" (click)="onSocialLogin('google')" [disabled]="loading()" class="oauth-btn">
-        <span>Google</span>
-      </button>
-      <button type="button" (click)="onSocialLogin('github')" [disabled]="loading()" class="oauth-btn">
-        <span>GitHub</span>
-      </button>
-    </div>
-
-    <!-- Quick Demo Credentials -->
-    <div class="demo-access-box">
-      <p class="demo-label">Cuentas de prueba rápidas (Sanctum):</p>
-      <div class="demo-btns">
-        <button type="button" (click)="fillDemoCredentials('admin')" class="demo-pill">
-          Entrar como Admin
-        </button>
-        <button type="button" (click)="fillDemoCredentials('customer')" class="demo-pill">
-          Entrar como Cliente
-        </button>
-      </div>
-    </div>
   </div>
 </div>

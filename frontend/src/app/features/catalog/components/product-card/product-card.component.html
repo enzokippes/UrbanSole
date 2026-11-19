@@ -33,7 +33,10 @@
   <div class="card-info">
     <div class="brand-row">
       <span class="brand-text">{{ product.brand }}</span>
-      <span *ngIf="product.colors && product.colors.length > 1" class="colors-count">
+      <span *ngIf="product.reviews_count" class="rating-pill" title="Calificación de clientes">
+        ★ {{ product.reviews_avg_rating | number:'1.1-1' }} ({{ product.reviews_count }})
+      </span>
+      <span *ngIf="!product.reviews_count && product.colors && product.colors.length > 1" class="colors-count">
         {{ product.colors.length }} colores
       </span>
     </div>
@@ -73,6 +76,19 @@
       </div>
 
       <div class="card-actions">
+        <button
+          type="button"
+          (click)="toggleWishlist($event)"
+          class="fav-btn"
+          [class.fav-active]="wishlist.isFavorite(product.id)"
+          [attr.aria-label]="wishlist.isFavorite(product.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+          [title]="wishlist.isFavorite(product.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+        >
+          <svg viewBox="0 0 24 24" [attr.fill]="wishlist.isFavorite(product.id) ? 'currentColor' : 'none'" stroke="currentColor" class="fav-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </button>
         <a
           *ngIf="product.model_3d_url"
           [routerLink]="['/product', product.id]"

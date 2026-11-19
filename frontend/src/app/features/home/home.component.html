@@ -97,7 +97,7 @@
             <!-- Bottom Info Bar of current 3D model -->
             <div class="showcase-bottom-bar">
               <div>
-                <span class="showcase-cat-tag">{{ currentHeroItem().category }} · Modelo 3D Fiel</span>
+                <span class="showcase-cat-tag">{{ currentHeroItem().category }} · Visor 3D 360°</span>
                 <h3 class="showcase-shoe-name">{{ currentHeroItem().name }}</h3>
                 <p class="showcase-shoe-sub">{{ currentHeroItem().subtitle }}</p>
               </div>
@@ -152,7 +152,7 @@
   <section class="container py-16">
     <div class="section-header">
       <div>
-        <p class="section-tag">Modelos con Visor 3D 360° Fiel al Nombre</p>
+        <p class="section-tag">Experiencia Interactiva 360°</p>
         <h2 class="section-title">Catálogo Destacado en 3D</h2>
       </div>
 
@@ -217,14 +217,13 @@
         <span class="brand-title">URBAN<span class="brand-accent">SOLE</span></span>
       </div>
       <p class="footer-copy">
-        UrbanSole &copy; 2026. E-Commerce 3D para Programación IV (UTN Facultad Regional Concordia).
+        UrbanSole &copy; 2026. Todos los derechos reservados.
       </p>
       <div class="footer-links">
         <a routerLink="/catalog">Catálogo</a>
         <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Hombre' }">Hombre</a>
         <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Mujer' }">Mujer</a>
         <a [routerLink]="['/catalog']" [queryParams]="{ category: 'Niño' }">Niño</a>
-        <a href="http://localhost:8000/api/docs" target="_blank" rel="noopener">Swagger API</a>
       </div>
     </div>
   </footer>

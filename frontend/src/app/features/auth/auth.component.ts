@@ -31,7 +31,6 @@ export class AuthComponent {
   isLoginMode = signal<boolean>(true);
   loading = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
-  successMessage = signal<string | null>(null);
   showPassword = signal<boolean>(false);
 
   loginForm: FormGroup = this.fb.group({
@@ -49,11 +48,21 @@ export class AuthComponent {
   toggleMode(login: boolean): void {
     this.isLoginMode.set(login);
     this.errorMessage.set(null);
-    this.successMessage.set(null);
   }
 
   togglePasswordVisibility(): void {
     this.showPassword.update(prev => !prev);
+  }
+
+  private extractApiError(err: any, fallback: string): string {
+    const errors = err?.error?.errors;
+    if (errors && typeof errors === 'object') {
+      const messages = Object.values(errors).flat().filter((m): m is string => typeof m === 'string' && m.trim().length > 0);
+      if (messages.length > 0) {
+        return messages.join(' ');
+      }
+    }
+    return err?.error?.message || fallback;
   }
 
   onLogin(): void {
@@ -72,8 +81,7 @@ export class AuthComponent {
       },
       error: (err: any) => {
         this.loading.set(false);
-        const msg = err.error?.message || 'Credenciales incorrectas o error en el servidor.';
-        this.errorMessage.set(msg);
+        this.errorMessage.set(this.extractApiError(err, 'Credenciales incorrectas o error en el servidor.'));
       }
     });
   }
@@ -99,43 +107,8 @@ export class AuthComponent {
       },
       error: (err: any) => {
         this.loading.set(false);
-        const msg = err.error?.message || 'Error al registrar el usuario.';
-        this.errorMessage.set(msg);
+        this.errorMessage.set(this.extractApiError(err, 'No se pudo completar el registro.'));
       }
     });
-  }
-
-  /**
-   * Semana 7: Autenticación con Proveedor Externo OAuth 2.0 (Google / GitHub)
-   */
-  onSocialLogin(provider: 'google' | 'github'): void {
-    this.loading.set(true);
-    this.errorMessage.set(null);
-
-    this.authService.socialLogin(provider).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.afterLogin();
-      },
-      error: (err: any) => {
-        this.loading.set(false);
-        this.errorMessage.set(err.error?.message || `Error en autenticación con ${provider}.`);
-      }
-    });
-  }
-
-  fillDemoCredentials(role: 'admin' | 'customer'): void {
-    this.isLoginMode.set(true);
-    if (role === 'admin') {
-      this.loginForm.patchValue({
-        email: 'admin@urbansole.com',
-        password: 'password'
-      });
-    } else {
-      this.loginForm.patchValue({
-        email: 'customer@urbansole.com',
-        password: 'password'
-      });
-    }
   }
 }

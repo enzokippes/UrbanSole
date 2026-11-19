@@ -158,6 +158,10 @@
   align-items: center;
   justify-content: center;
 }
+.wishlist-badge {
+  background-color: #f43f5e;
+  color: #ffffff;
+}
 
 .login-link {
   font-size: 0.875rem;
