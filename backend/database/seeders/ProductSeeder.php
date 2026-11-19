@@ -151,7 +151,7 @@ class ProductSeeder extends Seeder
             ],
             'color_images' => [
                 'Pastel Dream (Rosa/Azul/Blanco)' => '/images/precision-low.jpg',
-                'Rose Quartz (Rosa/Gris)'         => '/images/dunk-coast.jpg',
+                'Rose Quartz (Rosa/Gris)'         => '/images/velocity-runner.jpg',
                 'Ice White (Blanco/Gris)'         => '/images/jordan-smoke-grey.jpg',
             ],
             'color_models' => [
@@ -163,7 +163,7 @@ class ProductSeeder extends Seeder
             'model_3d_url' => '/models/af1-pastel-shadow.glb',
             'images' => [
                 '/images/precision-low.jpg',
-                '/images/dunk-coast.jpg',
+                '/images/velocity-runner.jpg',
                 '/images/jordan-smoke-grey.jpg',
             ],
         ],
@@ -181,8 +181,8 @@ class ProductSeeder extends Seeder
                 'Hyper Blue (Azul/Blanco)',
             ],
             'color_images' => [
-                'Rose Quartz (Rosa/Gris/Blanco)' => '/images/precision-low.jpg',
-                'Atmosphere Pink (Rosa/Blanco)'  => '/images/dunk-coast.jpg',
+                'Rose Quartz (Rosa/Gris/Blanco)' => '/images/velocity-runner.jpg',
+                'Atmosphere Pink (Rosa/Blanco)'  => '/images/precision-low.jpg',
                 'Hyper Blue (Azul/Blanco)'       => '/images/velocity-blue.jpg',
             ],
             'color_models' => [
@@ -193,8 +193,8 @@ class ProductSeeder extends Seeder
             'tags' => ['running', 'rose-quartz', 'women', 'fitness', '3d'],
             'model_3d_url' => '/models/velocity-beach.glb',
             'images' => [
+                '/images/velocity-runner.jpg',
                 '/images/precision-low.jpg',
-                '/images/dunk-coast.jpg',
                 '/images/velocity-blue.jpg',
             ],
         ],

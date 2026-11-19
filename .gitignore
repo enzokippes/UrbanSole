@@ -17,6 +17,8 @@ Thumbs.db
 /backend/storage/framework/testing/*
 /backend/storage/framework/views/*
 /backend/storage/logs/*
+/backend/storage/app/payment-proofs/*
+/backend/storage/app/public/uploads/*
 /backend/bootstrap/cache/*
 /backend/.env
 /backend/.env.backup

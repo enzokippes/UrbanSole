@@ -14,8 +14,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
         'password',
         'role',
+        'banned_at',
+        'ban_reason',
     ];
 
     protected $hidden = [
@@ -27,6 +30,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'banned_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -34,6 +38,11 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
     }
 
     public function orders()
