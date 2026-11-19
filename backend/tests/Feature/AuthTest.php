@@ -103,7 +103,8 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email'])
+            ->assertJsonPath('errors.email.0', 'Este correo electrónico ya está registrado.');
     }
 
     public function test_formato_de_email_invalido_falla()
@@ -116,7 +117,19 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email'])
+            ->assertJsonPath('errors.email.0', 'Ingresá un correo electrónico válido.');
+    }
+
+    public function test_login_credenciales_incorrectas_en_espanol()
+    {
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'noexiste@test.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('errors.email.0', 'El correo electrónico o la contraseña son incorrectos.');
     }
 
     public function test_actualizar_perfil_exitoso()
@@ -154,5 +167,61 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertTrue(Hash::check('nuevopassword123', $user->fresh()->password));
+    }
+
+    public function test_usuario_baneado_no_puede_iniciar_sesion_ni_usar_token()
+    {
+        $user = User::create([
+            'name' => 'Usuario Suspendido',
+            'email' => 'baneado@test.com',
+            'password' => Hash::make('password123'),
+            'role' => 'customer',
+            'banned_at' => now(),
+            'ban_reason' => 'Actividad sospechosa',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'baneado@test.com',
+            'password' => 'password123',
+        ])->assertStatus(403)
+            ->assertJsonPath('banned', true);
+
+        $token = $user->createToken('test-token')->plainTextToken;
+        $this->withToken($token)->getJson('/api/auth/user')
+            ->assertStatus(403)
+            ->assertJsonPath('banned', true);
+    }
+
+    public function test_rate_limits_para_registro_y_login()
+    {
+        // Máximo 3 registros cada 5 minutos
+        for ($i = 1; $i <= 3; $i++) {
+            $this->postJson('/api/auth/register', [
+                'name' => "Usuario {$i}",
+                'email' => "ratelimit{$i}@test.com",
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+            ])->assertCreated();
+        }
+
+        $this->postJson('/api/auth/register', [
+            'name' => 'Usuario 4',
+            'email' => 'ratelimit4@test.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertStatus(429);
+
+        // Máximo 5 intentos de login por minuto
+        for ($i = 1; $i <= 5; $i++) {
+            $this->postJson('/api/auth/login', [
+                'email' => 'ratelimit1@test.com',
+                'password' => 'wrong-password',
+            ])->assertUnprocessable();
+        }
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'ratelimit1@test.com',
+            'password' => 'password123',
+        ])->assertStatus(429);
     }
 }

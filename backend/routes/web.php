@@ -17,7 +17,7 @@ Route::get('/', function () {
 Route::get('/db-viewer', function () {
     $driver = DB::getDriverName();
     $databaseName = DB::getDatabaseName();
-    $tables = ['products', 'product_variants', 'users', 'personal_access_tokens', 'migrations'];
+    $tables = ['products', 'product_variants', 'orders', 'order_items', 'users', 'personal_access_tokens', 'migrations'];
     $selectedTable = request('table', 'products');
     if (!in_array($selectedTable, $tables, true)) {
         $selectedTable = 'products';
@@ -89,7 +89,7 @@ Route::get('/db-viewer', function () {
   <div class="container">
     <div class="top-bar">
       <div>
-        <span style="font-size:11px;color:#4ade80;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Programación IV · UTN Concordia · Semanas 3, 4, 5, 6 y 8</span>
+        <span style="font-size:11px;color:#4ade80;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">UrbanSole · Administración de Base de Datos</span>
         <h1 style="margin:4px 0 0;font-size:22px;">Explorador de Base de Datos + Consola de Endpoints API REST</h1>
       </div>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
@@ -109,7 +109,7 @@ Route::get('/db-viewer', function () {
         <p style="margin:0 0 8px;font-size:12px;color:#a1a1aa;">Insertar una nueva zapatilla 3D en la tabla <code>products</code> y <code>product_variants</code>:</p>
         <div class="field">
           <label>Nombre de la Zapatilla</label>
-          <input id="p_name" class="input" value="Nike Air Force 1 Mocha UTN" />
+          <input id="p_name" class="input" value="Nike Air Force 1 Mocha" />
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div class="field">
@@ -161,26 +161,26 @@ Route::get('/db-viewer', function () {
       <!-- 3. POST /api/auth/register -->
       <div class="card">
         <h3><span class="badge post">POST</span> <code>/api/auth/register</code></h3>
-        <p style="margin:0 0 8px;font-size:12px;color:#a1a1aa;">Registrar usuario en <code>users</code>, crear token Sanctum y disparar Webhook n8n:</p>
+        <p style="margin:0 0 8px;font-size:12px;color:#a1a1aa;">Registrar usuario en <code>users</code> y enviar correo de bienvenida:</p>
         <div class="field">
           <label>Nombre completo</label>
-          <input id="r_name" class="input" value="Profesor Programación IV" />
+          <input id="r_name" class="input" value="Juan Pérez" />
         </div>
         <div class="field">
           <label>Email</label>
-          <input id="r_email" class="input" value="profe.utn@concordia.edu.ar" />
+          <input id="r_email" class="input" value="juan.perez@urbansole.com" />
         </div>
         <div class="field">
           <label>Contraseña (mín. 8 caracteres)</label>
           <input id="r_pass" type="text" class="input" value="password123" />
         </div>
-        <button class="btn btn-green" onclick="registrarUsuarioAPI()">Enviar POST Registro + Token Sanctum</button>
+        <button class="btn btn-green" onclick="registrarUsuarioAPI()">Enviar POST Registro</button>
       </div>
 
       <!-- 4. DELETE /api/admin/products/{id} -->
       <div class="card">
         <h3><span class="badge delete">DELETE</span> <code>/api/admin/products/{id}</code></h3>
-        <p style="margin:0 0 8px;font-size:12px;color:#a1a1aa;">Eliminar un producto por su ID desde el endpoint protegido con Sanctum:</p>
+        <p style="margin:0 0 8px;font-size:12px;color:#a1a1aa;">Desactivar un producto por su ID desde el endpoint de administración:</p>
         <div class="field">
           <label>ID del Producto a eliminar</label>
           <input id="d_id" type="number" class="input" value="13" />
@@ -318,7 +318,7 @@ Route::get('/api/docs', function () {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UrbanSole API - Swagger UI (Programación IV)</title>
+  <title>UrbanSole API - Documentación</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
   <style>
     body { margin: 0; background: #fafafa; }

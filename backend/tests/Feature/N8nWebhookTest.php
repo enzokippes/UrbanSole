@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class N8nWebhookTest extends TestCase
@@ -161,5 +163,114 @@ class N8nWebhookTest extends TestCase
             ->assertJsonPath('delivered', false);
 
         Http::assertNothingSent();
+    }
+
+    public function test_order_creation_dispatches_receipt_email_and_pdf_attachment_once(): void
+    {
+        Http::fake([
+            'http://localhost:5678/webhook/*' => Http::response(['received' => true], 200),
+        ]);
+
+        $customer = User::create([
+            'name' => 'Comprador Real',
+            'email' => 'comprador@utn.edu.ar',
+            'password' => bcrypt('password123'),
+            'role' => 'customer',
+        ]);
+
+        $product = Product::create([
+            'name' => 'Air Jordan 1 High Chicago',
+            'brand' => 'Nike',
+            'description' => 'Modelo de prueba para recibo',
+            'slug' => (string) Str::uuid(),
+            'price' => 250.00,
+            'category' => 'Hombre',
+            'active' => true,
+        ]);
+        $variant = $product->variants()->create(['size' => '42', 'color' => 'Rojo', 'stock' => 10]);
+
+        $payload = [
+            'checkout_key' => (string) Str::uuid(),
+            'recipient' => 'Comprador Real',
+            'phone' => '3454000111',
+            'address' => 'Av. Concordia 123',
+            'city' => 'Concordia',
+            'postal_code' => '3200',
+            'items' => [
+                ['product_id' => $product->id, 'size' => '42', 'color' => 'Rojo', 'quantity' => 2],
+            ],
+        ];
+
+        $this->actingAs($customer, 'sanctum')->postJson('/api/orders', $payload)->assertCreated();
+        // Reintento idempotente con el mismo checkout_key no vuelve a disparar el webhook
+        $this->actingAs($customer, 'sanctum')->postJson('/api/orders', $payload)->assertCreated();
+
+        Http::assertSentCount(1);
+        Http::assertSent(function ($request) {
+            $attachment = $request['email_notification']['attachment'] ?? null;
+            $decodedPdf = $attachment ? base64_decode($attachment['content_base64']) : '';
+
+            return $request['event'] === 'order.created'
+                && $request['email_notification']['to'] === 'comprador@utn.edu.ar'
+                && str_contains($request['email_notification']['subject'], 'Recibo de compra')
+                && str_contains($request['email_notification']['html'], 'Air Jordan 1 High Chicago')
+                && str_starts_with($decodedPdf, '%PDF');
+        });
+    }
+
+    public function test_order_status_update_and_checkout_low_stock_dispatch_notifications(): void
+    {
+        Http::fake([
+            'http://localhost:5678/webhook/*' => Http::response(['received' => true], 200),
+        ]);
+
+        $admin = $this->createAdminUser();
+        $customer = User::create([
+            'name' => 'Cliente Fiel',
+            'email' => 'cliente.fiel@urbansole.com',
+            'password' => bcrypt('password123'),
+            'role' => 'customer',
+        ]);
+
+        $product = Product::create([
+            'name' => 'Jordan 1 Bred',
+            'brand' => 'Nike',
+            'description' => 'Zapatilla de prueba stock crítico',
+            'slug' => (string) Str::uuid(),
+            'price' => 210.00,
+            'category' => 'Hombre',
+            'active' => true,
+        ]);
+        $product->variants()->create(['size' => '41', 'color' => 'Negro/Rojo', 'stock' => 5]);
+
+        $order = $this->actingAs($customer, 'sanctum')->postJson('/api/orders', [
+            'checkout_key' => (string) Str::uuid(),
+            'recipient' => 'Cliente Fiel',
+            'phone' => '3454112233',
+            'address' => 'Mitre 300',
+            'city' => 'Concordia',
+            'postal_code' => '3200',
+            'items' => [
+                ['product_id' => $product->id, 'size' => '41', 'color' => 'Negro/Rojo', 'quantity' => 3],
+            ],
+        ])->assertCreated()->json();
+
+        // Al comprar 3 de 5, quedan 2 pares -> dispara order.created (al cliente) y stock.low (al admin)
+        Http::assertSent(fn ($req) => $req['event'] === 'order.created'
+            && $req['email_notification']['to'] === 'cliente.fiel@urbansole.com');
+
+        Http::assertSent(fn ($req) => $req['event'] === 'stock.low'
+            && $req['email_notification']['to'] === 'admin@urbansole.com'
+            && $req['data']['min_stock'] === 2
+            && str_contains($req['email_notification']['subject'], 'ALERTA DE STOCK'));
+
+        // Admin confirma y envía el pedido -> dispara order.status_updated al correo del cliente
+        $this->actingAs($admin, 'sanctum')->patchJson("/api/admin/orders/{$order['id']}", ['status' => 'confirmed'])->assertOk();
+        $this->actingAs($admin, 'sanctum')->patchJson("/api/admin/orders/{$order['id']}", ['status' => 'shipped'])->assertOk();
+
+        Http::assertSent(fn ($req) => $req['event'] === 'order.status_updated'
+            && $req['email_notification']['to'] === 'cliente.fiel@urbansole.com'
+            && str_contains($req['email_notification']['subject'], "Tu pedido #{$order['id']} ahora está: Enviado")
+            && str_contains($req['email_notification']['html'], 'Jordan 1 Bred'));
     }
 }

@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'is.admin' => \App\Http\Middleware\IsAdmin::class,
+            'not.banned' => \App\Http\Middleware\EnsureNotBanned::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
@@ -25,5 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'No autenticado. Iniciá sesión para continuar.',
+                ], 401);
+            }
+        });
     })->create();

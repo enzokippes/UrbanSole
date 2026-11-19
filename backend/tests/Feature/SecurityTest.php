@@ -26,7 +26,7 @@ class SecurityTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJson([
-                'message' => 'Unauthorized. Admin access required.',
+                'message' => 'No autorizado. Se requiere acceso de administrador.',
             ]);
     }
 
@@ -64,7 +64,7 @@ class SecurityTest extends TestCase
             ->postJson('/api/auth/logout');
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Logged out successfully']);
+            ->assertJson(['message' => 'Sesión cerrada correctamente.']);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }

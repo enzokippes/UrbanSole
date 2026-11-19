@@ -4,17 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\N8nWebhookService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     public function __construct(
-        protected N8nWebhookService $n8nWebhook
+        protected NotificationService $notifications
     ) {}
 
     public function register(Request $request)
@@ -34,8 +33,8 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        // Semana 15: Automatización basada en eventos -> Dispara Webhook a n8n para enviar Email de Bienvenida
-        $this->n8nWebhook->dispatch('user.registered', [
+        // Enviar correo de bienvenida
+        $this->notifications->dispatch('user.registered', [
             'user_id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
@@ -45,7 +44,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $user,
             'token' => $token,
-            'message' => 'Registration successful',
+            'message' => 'Cuenta creada correctamente.',
         ], 201);
     }
 
@@ -60,8 +59,17 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['El correo electrónico o la contraseña son incorrectos.'],
             ]);
+        }
+
+        if ($user->isBanned()) {
+            $user->tokens()->delete();
+
+            return response()->json([
+                'banned' => true,
+                'message' => 'Tu cuenta ha sido suspendida.' . ($user->ban_reason ? " Motivo: {$user->ban_reason}" : ''),
+            ], 403);
         }
 
         // Revoke old tokens
@@ -72,41 +80,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $user,
             'token' => $token,
-            'message' => 'Login successful',
-        ]);
-    }
-
-    /**
-     * Semana 7: Integración con proveedores de identidad OAuth 2.0 (Google / GitHub).
-     */
-    public function socialLogin(Request $request)
-    {
-        $request->validate([
-            'provider' => 'required|in:google,github',
-            'email' => 'nullable|email',
-            'name' => 'nullable|string|max:255',
-        ]);
-
-        $provider = $request->provider;
-        $email = $request->email ?: ($provider === 'google' ? 'usuario.google@gmail.com' : 'dev.github@urbansole.com');
-        $name = $request->name ?: ($provider === 'google' ? 'Usuario Google OAuth' : 'GitHub Developer');
-
-        $user = User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name' => $name,
-                'password' => Hash::make(Str::random(24)),
-                'role' => 'customer',
-            ]
-        );
-
-        $token = $user->createToken("oauth-{$provider}-token")->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'provider' => $provider,
-            'message' => "Autenticación OAuth 2.0 con " . ucfirst($provider) . " exitosa",
+            'message' => 'Inicio de sesión exitoso.',
         ]);
     }
 
@@ -114,7 +88,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json(['message' => 'Sesión cerrada correctamente.']);
     }
 
     public function user(Request $request)
