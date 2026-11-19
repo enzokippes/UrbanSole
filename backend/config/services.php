@@ -14,16 +14,11 @@ return [
         'notify_email' => env('N8N_NOTIFY_EMAIL', 'admin@urbansole.com'),
     ],
 
-    'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/oauth/callback'),
-    ],
-
-    'github' => [
-        'client_id' => env('GITHUB_CLIENT_ID'),
-        'client_secret' => env('GITHUB_CLIENT_SECRET'),
-        'redirect' => env('GITHUB_REDIRECT_URI', 'http://localhost:8000/api/auth/oauth/callback'),
+    'bank' => [
+        'alias' => env('STORE_BANK_ALIAS', 'URBANSOLE.TIENDA.MP'),
+        'cbu' => env('STORE_BANK_CBU', '0000003100048291038472'),
+        'holder' => env('STORE_BANK_HOLDER', 'UrbanSole Indumentaria SRL'),
+        'bank_name' => env('STORE_BANK_NAME', 'Mercado Pago / Banco Galicia'),
     ],
 
 ];

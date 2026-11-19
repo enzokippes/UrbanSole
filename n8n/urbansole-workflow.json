@@ -1,5 +1,5 @@
 {
-  "name": "UrbanSole 3D - Automatización de Eventos y Emails (Programación IV - UTN)",
+  "name": "UrbanSole 3D - Automatización de Eventos y Emails",
   "nodes": [
     {
       "parameters": {
@@ -161,7 +161,7 @@
   },
   "tags": [
     {
-      "name": "Programación IV - UTN Concordia"
+      "name": "UrbanSole 3D"
     },
     {
       "name": "Laravel + Angular + n8n"
